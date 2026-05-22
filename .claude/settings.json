@@ -4,7 +4,9 @@
       "Bash(mkdir -p /Users/kushal/swastha-nepal-ai/components /Users/kushal/swastha-nepal-ai/lib /Users/kushal/swastha-nepal-ai/services /Users/kushal/swastha-nepal-ai/types /Users/kushal/swastha-nepal-ai/hooks /Users/kushal/swastha-nepal-ai/styles && echo \"Directories created\")",
       "Bash(node -e \"const { z } = require\\('zod'\\); const s = z.object\\({ email: z.string\\(\\).email\\(\\) }\\); const r = s.safeParse\\({ email: 'bad' }\\); console.log\\(JSON.stringify\\(r.error?.issues\\)\\)\")",
       "Bash(node -e \"const { z } = require\\('zod'\\); const s = z.object\\({a:z.string\\(\\),b:z.string\\(\\)}\\).refine\\(d=>d.a===d.b, {error:'no match', path:['b']}\\); const r = s.safeParse\\({a:'x',b:'y'}\\); console.log\\(JSON.stringify\\(r.error?.issues\\)\\); const e = z.enum\\(['patient','doctor']\\); const r2 = e.safeParse\\('bad'\\); console.log\\(JSON.stringify\\(r2.error?.issues\\)\\)\")",
-      "Bash(npx prisma *)"
+      "Bash(npx prisma *)",
+      "Bash(git -C /Users/kushal/swastha-nepal-ai log --oneline -5)",
+      "Bash(git -C /Users/kushal/swastha-nepal-ai show e5c7c7a --name-only)"
     ],
     "additionalDirectories": [
       "/Users/kushal/swastha-nepal-ai"
