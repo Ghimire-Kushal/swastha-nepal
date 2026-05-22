@@ -18,18 +18,8 @@ interface CardData {
 }
 
 export default function QRCard({ data }: { data: CardData }) {
-  const qrValue = JSON.stringify({
-    n: data.name,
-    dob: data.dob,
-    bt: data.bloodType,
-    od: data.organDonor,
-    cc: data.criticalConditions,
-    al: data.allergies,
-    ec: data.emergencyContact
-      ? `${data.emergencyContact.name} (${data.emergencyContact.relationship}) ${data.emergencyContact.phone}`
-      : '',
-    hash: data.qrHash,
-  })
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://swasthanepal.ai'
+  const qrValue = `${origin}/emergency/${data.qrHash}`
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">

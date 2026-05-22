@@ -4,6 +4,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
 import { LayoutDashboard, ClipboardList, Upload, FileText, LogOut, FlaskConical } from 'lucide-react'
+import LanguageToggle from '@/components/LanguageToggle'
+import { useLanguage } from '@/hooks/useLanguage'
+import { td } from '@/lib/translations'
 
 const NAV_ITEMS = [
   { href: '/lab', label: 'Overview', icon: LayoutDashboard, exact: true },
@@ -14,6 +17,7 @@ const NAV_ITEMS = [
 
 export default function LabSidebar({ techName }: { techName: string }) {
   const pathname = usePathname()
+  const { lang } = useLanguage()
 
   function isActive(href: string, exact?: boolean) {
     return exact ? pathname === href : pathname.startsWith(href)
@@ -21,7 +25,7 @@ export default function LabSidebar({ techName }: { techName: string }) {
 
   return (
     <aside className="w-64 shrink-0 bg-white border-r border-slate-200 flex flex-col h-screen sticky top-0">
-      <div className="px-6 py-5 border-b border-slate-100">
+      <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
             <FlaskConical className="w-4 h-4 text-white" />
@@ -31,6 +35,7 @@ export default function LabSidebar({ techName }: { techName: string }) {
             <div className="text-xs text-purple-600 font-medium">Lab Portal</div>
           </div>
         </Link>
+        <LanguageToggle />
       </div>
 
       <div className="px-4 py-3 border-b border-slate-100 bg-purple-50">
@@ -59,7 +64,7 @@ export default function LabSidebar({ techName }: { techName: string }) {
               }`}
             >
               <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-purple-600' : 'text-slate-400'}`} />
-              {label}
+              {td(label, lang)}
             </Link>
           )
         })}
@@ -72,7 +77,7 @@ export default function LabSidebar({ techName }: { techName: string }) {
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
           >
             <LogOut className="w-4 h-4 shrink-0 text-slate-400" />
-            Sign out
+            {td('Sign out', lang)}
           </button>
         </form>
       </div>

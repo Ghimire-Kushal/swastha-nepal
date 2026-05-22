@@ -8,6 +8,7 @@ import {
   ClipboardList,
   FlaskConical,
   Award,
+  Brain,
   Plus,
   Upload,
 } from 'lucide-react'
@@ -88,6 +89,13 @@ export default async function PatientDetailPage({
               >
                 <Upload className="w-3.5 h-3.5" />
                 Upload Report
+              </Link>
+              <Link
+                href={`/doctor/patients/${id}/ai`}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg hover:bg-slate-700 transition-colors"
+              >
+                <Brain className="w-3.5 h-3.5" />
+                AI Analysis
               </Link>
             </div>
           </div>

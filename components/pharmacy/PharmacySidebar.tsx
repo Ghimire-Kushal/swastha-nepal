@@ -3,34 +3,17 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
-import {
-  Heart,
-  LayoutDashboard,
-  User,
-  ClipboardList,
-  FileText,
-  FlaskConical,
-  Syringe,
-  QrCode,
-  Brain,
-  LogOut,
-} from 'lucide-react'
+import { LayoutDashboard, FileText, LogOut, Pill } from 'lucide-react'
 import LanguageToggle from '@/components/LanguageToggle'
 import { useLanguage } from '@/hooks/useLanguage'
 import { td } from '@/lib/translations'
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, exact: true },
-  { href: '/dashboard/profile', label: 'My Profile', icon: User },
-  { href: '/dashboard/medical-history', label: 'Medical History', icon: ClipboardList },
-  { href: '/dashboard/prescriptions', label: 'Prescriptions', icon: FileText },
-  { href: '/dashboard/lab-reports', label: 'Lab Reports', icon: FlaskConical },
-  { href: '/dashboard/vaccinations', label: 'Vaccinations', icon: Syringe },
-  { href: '/dashboard/qr-card', label: 'QR Health Card', icon: QrCode },
-  { href: '/dashboard/ai-analysis', label: 'AI Analysis', icon: Brain },
+  { href: '/pharmacy', label: 'Overview', icon: LayoutDashboard, exact: true },
+  { href: '/pharmacy/prescriptions', label: 'Rx List', icon: FileText },
 ]
 
-export default function Sidebar() {
+export default function PharmacySidebar({ pharmacistName }: { pharmacistName: string }) {
   const pathname = usePathname()
   const { lang } = useLanguage()
 
@@ -40,20 +23,31 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 shrink-0 bg-white border-r border-slate-200 flex flex-col h-screen sticky top-0">
-      {/* Logo */}
       <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-            <Heart className="w-4 h-4 text-white" fill="white" />
+          <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
+            <Pill className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-slate-900 text-sm">
-            Swastha Nepal <span className="text-emerald-600">AI</span>
-          </span>
+          <div>
+            <div className="font-bold text-slate-900 text-sm leading-tight">Swastha Nepal AI</div>
+            <div className="text-xs text-teal-600 font-medium">Pharmacy Portal</div>
+          </div>
         </Link>
         <LanguageToggle />
       </div>
 
-      {/* Nav */}
+      <div className="px-4 py-3 border-b border-slate-100 bg-teal-50">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center">
+            <Pill className="w-4 h-4 text-teal-600" />
+          </div>
+          <div>
+            <div className="text-xs font-semibold text-slate-800">{pharmacistName}</div>
+            <div className="text-xs text-slate-500">Pharmacist</div>
+          </div>
+        </div>
+      </div>
+
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {NAV_ITEMS.map(({ href, label, icon: Icon, exact }) => {
           const active = isActive(href, exact)
@@ -63,18 +57,17 @@ export default function Sidebar() {
               href={href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 active
-                  ? 'bg-emerald-50 text-emerald-700'
+                  ? 'bg-teal-50 text-teal-700'
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
-              <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-emerald-600' : 'text-slate-400'}`} />
+              <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-teal-600' : 'text-slate-400'}`} />
               {td(label, lang)}
             </Link>
           )
         })}
       </nav>
 
-      {/* Logout */}
       <div className="px-3 py-4 border-t border-slate-100">
         <form action={logout}>
           <button

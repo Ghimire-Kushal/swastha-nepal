@@ -1,5 +1,33 @@
 import type { Translations } from '@/types'
 
+export const dashboardUI: Record<string, Record<'en' | 'np', string>> = {
+  // Patient sidebar
+  'Overview':         { en: 'Overview',       np: 'सारांश' },
+  'My Profile':       { en: 'My Profile',      np: 'मेरो प्रोफाइल' },
+  'Medical History':  { en: 'Medical History', np: 'चिकित्सा इतिहास' },
+  'Prescriptions':    { en: 'Prescriptions',   np: 'प्रिस्क्रिप्सन' },
+  'Lab Reports':      { en: 'Lab Reports',     np: 'ल्याब रिपोर्ट' },
+  'Vaccinations':     { en: 'Vaccinations',    np: 'खोपहरू' },
+  'QR Health Card':   { en: 'QR Health Card',  np: 'QR स्वास्थ्य कार्ड' },
+  'AI Analysis':      { en: 'AI Analysis',     np: 'AI विश्लेषण' },
+  'Sign out':         { en: 'Sign out',        np: 'लग आउट' },
+  // Doctor sidebar
+  'Patients':         { en: 'Patients',        np: 'बिरामीहरू' },
+  'Upload Report':    { en: 'Upload Report',   np: 'रिपोर्ट अपलोड' },
+  'Disease Alerts':   { en: 'Disease Alerts',  np: 'रोग अलर्ट' },
+  'Birth Records':    { en: 'Birth Records',   np: 'जन्म दर्ता' },
+  'Death Records':    { en: 'Death Records',   np: 'मृत्यु दर्ता' },
+  // Lab sidebar
+  'Pending Orders':   { en: 'Pending Orders',  np: 'विचाराधीन अर्डर' },
+  'All Reports':      { en: 'All Reports',     np: 'सबै रिपोर्ट' },
+  // Pharmacy sidebar
+  'Rx List':          { en: 'Rx List',         np: 'प्रिस्क्रिप्सन सूची' },
+}
+
+export function td(key: string, lang: 'en' | 'np'): string {
+  return dashboardUI[key]?.[lang] ?? key
+}
+
 export const translations: Record<'en' | 'np', Translations> = {
   en: {
     nav: {

@@ -8,6 +8,7 @@ const PUBLIC_PATHS = new Set(['/', '/login', '/register'])
 function roleHome(role: SessionPayload['role']): string {
   if (role === 'doctor') return '/doctor'
   if (role === 'lab_technician') return '/lab'
+  if (role === 'pharmacist') return '/pharmacy'
   return '/dashboard'
 }
 
@@ -15,7 +16,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const token = request.cookies.get('auth-token')?.value
 
-  const isPublic = PUBLIC_PATHS.has(pathname) || pathname.startsWith('/api/')
+  const isPublic =
+    PUBLIC_PATHS.has(pathname) ||
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/emergency/')
 
   if (isPublic) {
     if ((pathname === '/login' || pathname === '/register') && token) {

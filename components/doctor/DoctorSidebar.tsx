@@ -9,19 +9,29 @@ import {
   Search,
   Bell,
   Upload,
+  Brain,
   LogOut,
   Stethoscope,
+  Baby,
+  Skull,
 } from 'lucide-react'
+import LanguageToggle from '@/components/LanguageToggle'
+import { useLanguage } from '@/hooks/useLanguage'
+import { td } from '@/lib/translations'
 
 const NAV_ITEMS = [
   { href: '/doctor', label: 'Overview', icon: LayoutDashboard, exact: true },
   { href: '/doctor/patients', label: 'Patients', icon: Search },
   { href: '/doctor/reports', label: 'Upload Report', icon: Upload },
   { href: '/doctor/alerts', label: 'Disease Alerts', icon: Bell },
+  { href: '/doctor/ai', label: 'AI Analysis', icon: Brain },
+  { href: '/doctor/birth', label: 'Birth Records', icon: Baby },
+  { href: '/doctor/death', label: 'Death Records', icon: Skull },
 ]
 
 export default function DoctorSidebar({ doctorName }: { doctorName: string }) {
   const pathname = usePathname()
+  const { lang } = useLanguage()
 
   function isActive(href: string, exact?: boolean) {
     return exact ? pathname === href : pathname.startsWith(href)
@@ -29,7 +39,7 @@ export default function DoctorSidebar({ doctorName }: { doctorName: string }) {
 
   return (
     <aside className="w-64 shrink-0 bg-white border-r border-slate-200 flex flex-col h-screen sticky top-0">
-      <div className="px-6 py-5 border-b border-slate-100">
+      <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <Stethoscope className="w-4 h-4 text-white" />
@@ -39,6 +49,7 @@ export default function DoctorSidebar({ doctorName }: { doctorName: string }) {
             <div className="text-xs text-blue-600 font-medium">Doctor Portal</div>
           </div>
         </Link>
+        <LanguageToggle />
       </div>
 
       {/* Doctor info */}
@@ -68,7 +79,7 @@ export default function DoctorSidebar({ doctorName }: { doctorName: string }) {
               }`}
             >
               <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-blue-600' : 'text-slate-400'}`} />
-              {label}
+              {td(label, lang)}
             </Link>
           )
         })}
@@ -81,7 +92,7 @@ export default function DoctorSidebar({ doctorName }: { doctorName: string }) {
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
           >
             <LogOut className="w-4 h-4 shrink-0 text-slate-400" />
-            Sign out
+            {td('Sign out', lang)}
           </button>
         </form>
       </div>
