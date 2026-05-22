@@ -1,15 +1,16 @@
 import { getSession } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { getAllPrescriptions } from '@/services/pharmacy'
-import { Pill, Clock, CheckCircle, PackageCheck, XCircle } from 'lucide-react'
+import { Pill, Clock, CheckCircle, PackageCheck, XCircle, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
-import type { RxStatus } from '@/lib/mock-pharmacy-data'
 
-const STATUS_CONFIG: Record<RxStatus, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-  pending:   { label: 'Pending',   color: 'bg-amber-100 text-amber-700 border-amber-200',   icon: Clock },
-  verified:  { label: 'Verified',  color: 'bg-blue-100 text-blue-700 border-blue-200',       icon: CheckCircle },
+type PrismaRxStatus = 'active' | 'dispensed' | 'expired' | 'cancelled'
+
+const STATUS_CONFIG: Record<PrismaRxStatus, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
+  active:    { label: 'Active',    color: 'bg-amber-100 text-amber-700 border-amber-200',      icon: Clock },
   dispensed: { label: 'Dispensed', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: PackageCheck },
-  rejected:  { label: 'Rejected',  color: 'bg-red-100 text-red-700 border-red-200',         icon: XCircle },
+  expired:   { label: 'Expired',   color: 'bg-slate-100 text-slate-600 border-slate-200',       icon: AlertCircle },
+  cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-700 border-red-200',             icon: XCircle },
 }
 
 export default async function PharmacyPrescriptionsPage({
@@ -38,7 +39,7 @@ export default async function PharmacyPrescriptionsPage({
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          {['pending', 'verified', 'dispensed'].map((f) => (
+          {(['active', 'dispensed', 'expired'] as PrismaRxStatus[]).map((f) => (
             <Link
               key={f}
               href={filter === f ? '/pharmacy/prescriptions' : `/pharmacy/prescriptions?filter=${f}`}
@@ -56,7 +57,7 @@ export default async function PharmacyPrescriptionsPage({
 
       <div className="space-y-3">
         {prescriptions.map((rx) => {
-          const cfg = STATUS_CONFIG[rx.status]
+          const cfg = STATUS_CONFIG[rx.status as PrismaRxStatus] ?? STATUS_CONFIG.active
           return (
             <Link
               key={rx.id}

@@ -171,7 +171,7 @@ export async function getPatientForDoctor(_userId: string, patientId: string) {
       type: r.recordType,
     })),
     currentMedications: result.emergencyInfo?.currentMedications ?? [],
-    vitalSigns: null,
+    vitalSigns: {} as Record<string, string>,
     labHighlights: result.labReports.map((r) => ({
       test: r.testName,
       result: r.result ?? '',

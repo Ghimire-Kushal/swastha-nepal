@@ -120,19 +120,42 @@ export async function getPrescriptions(userId: string) {
   })
   return rows.map((p) => ({
     id: p.id,
-    date: p.prescribedAt.toISOString().slice(0, 10),
+    prescribedDate: p.prescribedAt.toISOString().slice(0, 10),
+    validUntil: p.validUntil?.toISOString().slice(0, 10) ?? null,
     doctor: p.doctor.user.name,
     hospital: '',
     status: p.status as string,
     items: p.items.map((i) => ({
-      medicine: i.medicineName,
-      dose: i.dosage,
+      medicineName: i.medicineName,
+      genericName: i.genericName ?? '',
+      dosage: i.dosage,
       frequency: i.frequency,
       duration: i.duration ?? '',
+      route: i.route ?? '',
       instructions: i.instructions ?? '',
     })),
     notes: p.pharmacyNotes ?? '',
   }))
+}
+
+interface LabResultRow {
+  parameter: string
+  value: string | number
+  unit: string
+  referenceRange: string
+  isAbnormal: boolean
+}
+
+function parseResults(raw: string | null): LabResultRow[] {
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) return parsed as LabResultRow[]
+  } catch {
+    // not JSON — return single row with raw string as result
+    return [{ parameter: 'Result', value: raw, unit: '', referenceRange: '', isAbnormal: false }]
+  }
+  return []
 }
 
 export async function getLabReports(userId: string) {
@@ -141,12 +164,13 @@ export async function getLabReports(userId: string) {
   const rows = await prisma.labReport.findMany({
     where: { patientId },
     orderBy: { createdAt: 'desc' },
+    include: { orderedBy: { include: { user: { select: { name: true } } } } },
   })
   return rows.map((r) => ({
     id: r.id,
-    test: r.testName,
+    testName: r.testName,
     date: r.createdAt.toISOString().slice(0, 10),
-    result: r.result ?? '',
+    results: parseResults(r.result),
     referenceRange: r.referenceRange ?? '',
     unit: r.unit ?? '',
     isAbnormal: r.isAbnormal,
@@ -154,6 +178,7 @@ export async function getLabReports(userId: string) {
     category: r.category ?? '',
     reportUrl: r.reportUrl ?? null,
     notes: r.notes ?? '',
+    orderedBy: r.orderedBy ? `Dr. ${r.orderedBy.user.name}` : 'Unknown',
   }))
 }
 
@@ -166,15 +191,17 @@ export async function getVaccinations(userId: string) {
   })
   return rows.map((v) => ({
     id: v.id,
-    vaccine: v.vaccineName,
+    vaccineName: v.vaccineName,
     brand: v.vaccineBrand ?? '',
     lotNumber: v.lotNumber ?? '',
     doseNumber: v.doseNumber,
     totalDoses: v.totalDoses,
-    date: v.administeredAt.toISOString().slice(0, 10),
-    nextDue: v.nextDoseDue?.toISOString().slice(0, 10) ?? null,
+    administeredAt: v.administeredAt.toISOString().slice(0, 10),
+    nextDoseDue: v.nextDoseDue?.toISOString().slice(0, 10) ?? null,
     site: v.site ?? '',
     facility: v.facility ?? '',
+    route: v.route ?? '',
+    adverseReactions: v.adverseReactions ?? null,
     certificateUrl: v.certificateUrl ?? null,
     notes: v.notes ?? '',
   }))
@@ -196,9 +223,8 @@ export async function getUpcomingAppointments(userId: string) {
   return rows.map((a) => ({
     id: a.id,
     doctor: a.doctor.user.name,
-    specialization: a.doctor.specialization,
-    date: a.scheduledAt.toISOString().slice(0, 10),
-    time: a.scheduledAt.toTimeString().slice(0, 5),
+    specialty: a.doctor.specialization,
+    scheduledAt: a.scheduledAt.toISOString(),
     type: a.type as string,
     status: a.status as string,
     location: a.location ?? '',
@@ -206,14 +232,80 @@ export async function getUpcomingAppointments(userId: string) {
   }))
 }
 
+const CARDIOVASCULAR_KEYWORDS = ['hypertension', 'cardiac', 'heart', 'af', 'stroke', 'angina']
+const METABOLIC_KEYWORDS = ['diabetes', 'thyroid', 'obesity', 'lipid', 'cholesterol', 'metabolic']
+const RESPIRATORY_KEYWORDS = ['asthma', 'copd', 'tuberculosis', 'respiratory', 'lung', 'pneumonia']
+
+function computeRiskScore(conditions: string[], keywords: string[]): number {
+  const matched = conditions.filter((c) =>
+    keywords.some((k) => c.toLowerCase().includes(k))
+  ).length
+  return Math.min(matched * 25, 85)
+}
+
 export async function getAIHealthSummary(userId: string) {
-  // Aggregate real patient data to build a summary for the AI widget
   const patientId = await getPatientIdByUserId(userId)
-  if (!patientId) return { conditions: [], medications: [], lastUpdated: new Date().toISOString().slice(0, 10) }
-  const info = await prisma.emergencyInfo.findUnique({ where: { patientId }, select: { criticalConditions: true, currentMedications: true } })
+  if (!patientId) {
+    return {
+      healthScore: 85,
+      riskScores: [
+        { name: 'Cardiovascular', score: 0, color: '#22c55e' },
+        { name: 'Metabolic', score: 0, color: '#22c55e' },
+        { name: 'Respiratory', score: 0, color: '#22c55e' },
+      ],
+      findings: [{ type: 'info', text: 'No health data recorded yet.' }],
+      recommendations: ['Schedule a baseline health checkup', 'Register your emergency medical info'],
+      lastUpdated: new Date().toISOString().slice(0, 10),
+      conditions: [] as string[],
+      medications: [] as string[],
+    }
+  }
+
+  const info = await prisma.emergencyInfo.findUnique({
+    where: { patientId },
+    select: { criticalConditions: true, currentMedications: true },
+  })
+
+  const conditions = info?.criticalConditions ?? []
+  const medications = info?.currentMedications ?? []
+
+  const cvScore = computeRiskScore(conditions, CARDIOVASCULAR_KEYWORDS)
+  const metScore = computeRiskScore(conditions, METABOLIC_KEYWORDS)
+  const respScore = computeRiskScore(conditions, RESPIRATORY_KEYWORDS)
+
+  const healthScore = Math.max(30, 100 - conditions.length * 8 - medications.length * 2)
+
+  const findings: { type: string; text: string }[] = []
+  if (conditions.length > 0) {
+    findings.push({ type: 'warning', text: `${conditions.length} chronic condition${conditions.length > 1 ? 's' : ''} on record: ${conditions.slice(0, 2).join(', ')}${conditions.length > 2 ? '…' : ''}` })
+  }
+  if (medications.length > 0) {
+    findings.push({ type: 'info', text: `Currently on ${medications.length} medication${medications.length > 1 ? 's' : ''}` })
+  }
+  if (findings.length === 0) {
+    findings.push({ type: 'success', text: 'No critical conditions recorded' })
+  }
+
+  const recommendations: string[] = []
+  if (cvScore > 0) recommendations.push('Monitor blood pressure and cardiovascular health regularly')
+  if (metScore > 0) recommendations.push('Track blood glucose and metabolic markers')
+  if (respScore > 0) recommendations.push('Avoid respiratory irritants; monitor peak flow if asthmatic')
+  if (recommendations.length === 0) recommendations.push('Maintain regular health checkups')
+  recommendations.push('Keep emergency info and contacts up to date')
+
+  const scoreColor = (s: number) => s === 0 ? '#22c55e' : s <= 25 ? '#eab308' : '#ef4444'
+
   return {
-    conditions: info?.criticalConditions ?? [],
-    medications: info?.currentMedications ?? [],
+    healthScore,
+    riskScores: [
+      { name: 'Cardiovascular', score: cvScore, color: scoreColor(cvScore) },
+      { name: 'Metabolic', score: metScore, color: scoreColor(metScore) },
+      { name: 'Respiratory', score: respScore, color: scoreColor(respScore) },
+    ],
+    findings,
+    recommendations,
     lastUpdated: new Date().toISOString().slice(0, 10),
+    conditions,
+    medications,
   }
 }

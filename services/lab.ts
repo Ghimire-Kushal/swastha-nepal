@@ -57,7 +57,7 @@ export async function getPendingOrders(_userId: string) {
     orderedBy: r.orderedBy ? `Dr. ${r.orderedBy.user.name}` : 'Unknown',
     orderedAt: r.createdAt.toISOString(),
     tests: [r.testName],
-    priority: 'routine' as const,
+    priority: 'routine' as 'routine' | 'urgent',
     sampleType: r.sampleType ?? '',
     notes: r.notes ?? '',
     status: r.status as 'pending' | 'processing',
@@ -88,6 +88,6 @@ export async function getAllLabReports(userId: string) {
     hasAbnormal: r.isAbnormal,
     abnormalCount: r.isAbnormal ? 1 : 0,
     fileUrl: r.reportUrl ?? null,
-    results: [],
+    results: [] as { parameter: string; value: string | number; unit: string; referenceRange: string; isAbnormal: boolean }[],
   }))
 }
