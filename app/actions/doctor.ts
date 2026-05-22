@@ -2,6 +2,7 @@
 
 import { z } from 'zod'
 import { getSession } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -34,24 +35,25 @@ export async function addDiagnosis(
     return { errors: parsed.error.flatten().fieldErrors as Record<string, string[]> }
   }
 
-  const { symptoms, ...recordData } = parsed.data
+  const doctor = await prisma.doctor.findUnique({ where: { userId: session.sub }, select: { id: true } })
+  if (!doctor) return { message: 'Doctor record not found' }
+
+  const { symptoms, followUpDate, ...recordData } = parsed.data
   const symptomList = symptoms ? symptoms.split(',').map((s) => s.trim()).filter(Boolean) : []
 
-  // TODO: await prisma.medicalRecord.create({
-  //   data: {
-  //     patientId: recordData.patientId,
-  //     doctorId: (await prisma.doctor.findUnique({ where: { userId: session.sub } }))!.id,
-  //     recordType: recordData.recordType,
-  //     title: recordData.title,
-  //     diagnosis: recordData.diagnosis,
-  //     icdCode: recordData.icdCode ?? null,
-  //     symptoms: symptomList,
-  //     notes: recordData.notes ?? null,
-  //     followUpDate: recordData.followUpDate ? new Date(recordData.followUpDate) : null,
-  //   }
-  // })
-  void symptomList
-  void recordData
+  await prisma.medicalRecord.create({
+    data: {
+      patientId: recordData.patientId,
+      doctorId: doctor.id,
+      recordType: recordData.recordType,
+      title: recordData.title,
+      diagnosis: recordData.diagnosis,
+      icdCode: recordData.icdCode ?? null,
+      symptoms: symptomList,
+      notes: recordData.notes ?? null,
+      followUpDate: followUpDate ? new Date(followUpDate) : null,
+    },
+  })
 
   return { success: true, message: 'Diagnosis recorded successfully' }
 }
@@ -65,6 +67,15 @@ const PrescriptionSchema = z.object({
   items: z.string().min(2, { error: 'Add at least one medicine' }),
 })
 
+interface RxItem {
+  medicine: string
+  dose: string
+  frequency: string
+  duration?: string
+  instructions?: string
+  quantity?: number
+}
+
 export async function addPrescription(
   _prevState: DoctorActionState,
   formData: FormData
@@ -77,7 +88,7 @@ export async function addPrescription(
     return { errors: parsed.error.flatten().fieldErrors as Record<string, string[]> }
   }
 
-  let items: unknown[]
+  let items: RxItem[]
   try {
     items = JSON.parse(parsed.data.items)
     if (!Array.isArray(items) || items.length === 0) throw new Error()
@@ -85,16 +96,29 @@ export async function addPrescription(
     return { errors: { items: ['Invalid medicine data — add at least one medicine'] } }
   }
 
-  // TODO: await prisma.prescription.create({
-  //   data: {
-  //     patientId: parsed.data.patientId,
-  //     doctorId: (await prisma.doctor.findUnique({ where: { userId: session.sub } }))!.id,
-  //     validUntil: new Date(parsed.data.validUntil),
-  //     pharmacyNotes: parsed.data.pharmacyNotes ?? null,
-  //     items: { createMany: { data: items } },
-  //   }
-  // })
-  void items
+  const doctor = await prisma.doctor.findUnique({ where: { userId: session.sub }, select: { id: true } })
+  if (!doctor) return { message: 'Doctor record not found' }
+
+  await prisma.prescription.create({
+    data: {
+      patientId: parsed.data.patientId,
+      doctorId: doctor.id,
+      validUntil: new Date(parsed.data.validUntil),
+      pharmacyNotes: parsed.data.pharmacyNotes ?? null,
+      items: {
+        createMany: {
+          data: items.map((i) => ({
+            medicineName: i.medicine,
+            dosage: i.dose,
+            frequency: i.frequency,
+            duration: i.duration ?? null,
+            instructions: i.instructions ?? null,
+            quantity: i.quantity ?? null,
+          })),
+        },
+      },
+    },
+  })
 
   return { success: true, message: 'Prescription created successfully' }
 }
@@ -123,7 +147,30 @@ export async function generateCertificate(
     return { errors: parsed.error.flatten().fieldErrors as Record<string, string[]> }
   }
 
-  // TODO: persist certificate record, generate PDF via a document service
+  const doctor = await prisma.doctor.findUnique({ where: { userId: session.sub }, select: { id: true } })
+  if (!doctor) return { message: 'Doctor record not found' }
+
+  const notes = [
+    parsed.data.recommendation,
+    parsed.data.sickLeaveDays ? `Sick leave: ${parsed.data.sickLeaveDays} days` : null,
+    parsed.data.referralHospital ? `Referral: ${parsed.data.referralHospital}` : null,
+    parsed.data.notes ?? null,
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  await prisma.medicalRecord.create({
+    data: {
+      patientId: parsed.data.patientId,
+      doctorId: doctor.id,
+      recordType: 'certificate',
+      title: `${parsed.data.certType.replace('_', ' ')} Certificate`,
+      diagnosis: parsed.data.diagnosis,
+      notes,
+      symptoms: [],
+    },
+  })
+
   return { success: true, message: 'Certificate generated successfully' }
 }
 
@@ -134,6 +181,7 @@ const ReportUploadSchema = z.object({
   reportTitle: z.string().min(3, { error: 'Title is required' }),
   reportType: z.enum(['xray', 'mri', 'ct', 'ultrasound', 'ecg', 'other'], { error: 'Select report type' }),
   notes: z.string().optional(),
+  fileUrl: z.string().optional(),
 })
 
 export async function uploadMedicalDocument(
@@ -148,13 +196,23 @@ export async function uploadMedicalDocument(
     return { errors: parsed.error.flatten().fieldErrors as Record<string, string[]> }
   }
 
-  const file = formData.get('file') as File | null
-  if (!file || file.size === 0) {
-    return { errors: { file: ['Please select a file to upload'] } }
-  }
+  const fileUrl = parsed.data.fileUrl
+  if (!fileUrl) return { errors: { file: ['Please upload a file first'] } }
 
-  // TODO: upload file to S3 / Minio / local storage, get back fileUrl
-  // TODO: prisma.medicalRecord.create({ data: { ..., attachments: [fileUrl] } })
+  const doctor = await prisma.doctor.findUnique({ where: { userId: session.sub }, select: { id: true } })
+  if (!doctor) return { message: 'Doctor record not found' }
+
+  await prisma.medicalRecord.create({
+    data: {
+      patientId: parsed.data.patientId,
+      doctorId: doctor.id,
+      recordType: parsed.data.reportType,
+      title: parsed.data.reportTitle,
+      notes: parsed.data.notes ?? null,
+      attachments: [fileUrl],
+      symptoms: [],
+    },
+  })
 
   return { success: true, message: `${parsed.data.reportTitle} uploaded successfully` }
 }

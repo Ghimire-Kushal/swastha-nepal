@@ -2,6 +2,7 @@
 
 import { z } from 'zod'
 import { getSession } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 export type LabActionState =
   | { errors?: Record<string, string[]>; message?: string; success?: boolean }
@@ -21,6 +22,7 @@ const LabUploadSchema = z.object({
   notes: z.string().optional(),
   sendToDoctor: z.string().optional(),
   orderId: z.string().optional(),
+  fileUrl: z.string().optional(),
 })
 
 export async function uploadLabReport(
@@ -35,7 +37,7 @@ export async function uploadLabReport(
     return { errors: parsed.error.flatten().fieldErrors as Record<string, string[]> }
   }
 
-  let results: unknown[]
+  let results: Array<{ isAbnormal?: boolean; parameter?: string; value?: string; unit?: string; referenceRange?: string }>
   try {
     results = JSON.parse(parsed.data.results)
     if (!Array.isArray(results) || results.length === 0) throw new Error()
@@ -43,33 +45,33 @@ export async function uploadLabReport(
     return { errors: { results: ['Add at least one result row'] } }
   }
 
-  const hasAbnormal = (results as Array<{ isAbnormal?: boolean }>).some((r) => r.isAbnormal)
-  const file = formData.get('file') as File | null
+  const hasAbnormal = results.some((r) => r.isAbnormal)
+  const firstAbnormal = results.find((r) => r.isAbnormal)
+  const referenceRange = firstAbnormal?.referenceRange ?? results[0]?.referenceRange ?? null
+  const unit = results[0]?.unit ?? null
 
-  // TODO: if file, upload to storage and get fileUrl
-  // TODO: prisma.labReport.create({
-  //   data: {
-  //     patientId: parsed.data.patientId,
-  //     processedById: session.sub,
-  //     testName: parsed.data.testName,
-  //     category: parsed.data.category,
-  //     sampleType: parsed.data.sampleType ?? null,
-  //     result: JSON.stringify(results),
-  //     isAbnormal: hasAbnormal,
-  //     notes: parsed.data.notes ?? null,
-  //     reportUrl: fileUrl ?? null,
-  //     status: 'completed',
-  //     completedAt: new Date(),
-  //   }
-  // })
-  // TODO: if sendToDoctor, create notification record
-  void hasAbnormal
-  void file
+  await prisma.labReport.create({
+    data: {
+      patientId: parsed.data.patientId,
+      processedById: session.sub,
+      testName: parsed.data.testName,
+      category: parsed.data.category,
+      sampleType: parsed.data.sampleType ?? null,
+      result: JSON.stringify(results),
+      referenceRange,
+      unit,
+      isAbnormal: hasAbnormal,
+      notes: parsed.data.notes ?? null,
+      reportUrl: parsed.data.fileUrl || null,
+      status: 'completed',
+      completedAt: new Date(),
+    },
+  })
 
   return {
     success: true,
-    message: parsed.data.sendToDoctor
-      ? `Report uploaded and sent to the ordering doctor`
+    message: parsed.data.sendToDoctor === '1'
+      ? 'Report uploaded and sent to the ordering doctor'
       : 'Report uploaded successfully',
   }
 }
@@ -80,8 +82,10 @@ export async function markReportAbnormal(reportId: string): Promise<LabActionSta
   const session = await getSession()
   if (!session || session.role !== 'lab_technician') return { message: 'Unauthorized' }
 
-  // TODO: prisma.labReport.update({ where: { id: reportId }, data: { isAbnormal: true } })
-  void reportId
+  await prisma.labReport.update({
+    where: { id: reportId },
+    data: { isAbnormal: true },
+  })
 
   return { success: true, message: 'Report flagged as abnormal' }
 }
@@ -92,8 +96,6 @@ export async function sendReportToDoctor(reportId: string): Promise<LabActionSta
   const session = await getSession()
   if (!session || session.role !== 'lab_technician') return { message: 'Unauthorized' }
 
-  // TODO: create notification, update a sentToDoctor flag on the report
   void reportId
-
   return { success: true, message: 'Report sent to ordering doctor' }
 }

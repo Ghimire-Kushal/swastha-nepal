@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 import { getSession } from '@/lib/auth'
-import { MOCK_PRESCRIPTIONS } from '@/lib/mock-pharmacy-data'
+import { prisma } from '@/lib/prisma'
 
 export type PharmacyActionState =
   | { success: true; message: string }
@@ -26,12 +26,20 @@ export async function verifyPrescription(
   const result = VerifySchema.safeParse(Object.fromEntries(formData))
   if (!result.success) return { success: false, error: 'Invalid data' }
 
-  const rx = MOCK_PRESCRIPTIONS.find((r) => r.id === result.data.prescriptionId)
+  const rx = await prisma.prescription.findUnique({
+    where: { id: result.data.prescriptionId },
+    select: { id: true, status: true },
+  })
   if (!rx) return { success: false, error: 'Prescription not found' }
 
-  // TODO: update status to 'verified' in database
-  rx.status = 'verified'
-  return { success: true, message: `Prescription ${rx.id} verified successfully` }
+  if (result.data.notes) {
+    await prisma.prescription.update({
+      where: { id: rx.id },
+      data: { pharmacyNotes: result.data.notes },
+    })
+  }
+
+  return { success: true, message: `Prescription ${rx.id} verified` }
 }
 
 export async function dispensePrescription(
@@ -46,14 +54,23 @@ export async function dispensePrescription(
   const prescriptionId = formData.get('prescriptionId') as string
   if (!prescriptionId) return { success: false, error: 'Missing prescription ID' }
 
-  const rx = MOCK_PRESCRIPTIONS.find((r) => r.id === prescriptionId)
+  const rx = await prisma.prescription.findUnique({
+    where: { id: prescriptionId },
+    include: { patient: { include: { user: { select: { name: true } } } } },
+  })
   if (!rx) return { success: false, error: 'Prescription not found' }
   if (rx.status === 'dispensed') return { success: false, error: 'Already dispensed' }
 
-  // TODO: update status in database
-  rx.status = 'dispensed'
-  rx.dispensedAt = new Date().toISOString().slice(0, 10)
-  return { success: true, message: `Medicines dispensed for ${rx.patientName}` }
+  await prisma.prescription.update({
+    where: { id: prescriptionId },
+    data: {
+      status: 'dispensed',
+      dispensedAt: new Date(),
+      dispensedById: session.sub,
+    },
+  })
+
+  return { success: true, message: `Medicines dispensed for ${rx.patient.user.name}` }
 }
 
 export async function rejectPrescription(
@@ -68,9 +85,16 @@ export async function rejectPrescription(
   const prescriptionId = formData.get('prescriptionId') as string
   if (!prescriptionId) return { success: false, error: 'Missing prescription ID' }
 
-  const rx = MOCK_PRESCRIPTIONS.find((r) => r.id === prescriptionId)
+  const rx = await prisma.prescription.findUnique({
+    where: { id: prescriptionId },
+    select: { id: true },
+  })
   if (!rx) return { success: false, error: 'Prescription not found' }
 
-  rx.status = 'rejected'
+  await prisma.prescription.update({
+    where: { id: prescriptionId },
+    data: { status: 'cancelled' },
+  })
+
   return { success: true, message: `Prescription ${rx.id} rejected` }
 }

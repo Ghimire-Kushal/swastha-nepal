@@ -2,6 +2,7 @@
 
 import { z } from 'zod'
 import { getSession } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 export type RecordActionState =
   | { success: true; data: Record<string, string> }
@@ -50,12 +51,45 @@ export async function registerBirth(
     return { success: false, error: result.error.issues[0]?.message ?? 'Validation failed' }
   }
 
-  // TODO: insert into Birth table in database
+  const d = result.data
   const certNumber = `BC-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`
+
+  let dob: Date
+  try {
+    dob = d.timeOfBirth
+      ? new Date(`${d.dateOfBirth}T${d.timeOfBirth}`)
+      : new Date(d.dateOfBirth)
+  } catch {
+    return { success: false, error: 'Invalid date of birth' }
+  }
+
+  await prisma.birthRecord.create({
+    data: {
+      registeredById: session.sub,
+      birthCertificateNumber: certNumber,
+      childName: d.childName,
+      dateOfBirth: dob,
+      placeOfBirth: d.birthPlace,
+      gender: d.gender,
+      weightKg: d.birthWeight ? parseFloat(d.birthWeight) : null,
+      deliveryType: d.deliveryType,
+      fatherName: d.fatherName,
+      motherName: d.motherName,
+      notes: d.notes ?? null,
+      isRegistered: true,
+      registrationDate: new Date(),
+    },
+  })
+
   return {
     success: true,
     data: {
-      ...result.data,
+      childName: d.childName,
+      dateOfBirth: d.dateOfBirth,
+      gender: d.gender,
+      birthPlace: d.birthPlace,
+      motherName: d.motherName,
+      fatherName: d.fatherName,
       certNumber,
       issuedDate: new Date().toISOString().slice(0, 10),
     },
@@ -76,12 +110,52 @@ export async function registerDeath(
     return { success: false, error: result.error.issues[0]?.message ?? 'Validation failed' }
   }
 
-  // TODO: insert into Death table in database
+  const d = result.data
   const certNumber = `DC-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`
+
+  let dod: Date
+  try {
+    dod = d.timeOfDeath
+      ? new Date(`${d.dateOfDeath}T${d.timeOfDeath}`)
+      : new Date(d.dateOfDeath)
+  } catch {
+    return { success: false, error: 'Invalid date of death' }
+  }
+
+  const mannerMap: Record<string, 'natural' | 'accident' | 'suicide' | 'homicide' | 'undetermined'> = {
+    natural: 'natural',
+    accident: 'accident',
+    homicide: 'homicide',
+    suicide: 'suicide',
+    unknown: 'undetermined',
+  }
+
+  await prisma.deathRecord.create({
+    data: {
+      registeredById: session.sub,
+      deathCertificateNumber: certNumber,
+      deceasedName: d.deceasedName,
+      dateOfDeath: dod,
+      placeOfDeath: d.placeOfDeath,
+      primaryCause: d.causeOfDeath,
+      secondaryCauses: [],
+      mannerOfDeath: mannerMap[d.mannerOfDeath],
+      ageAtDeath: parseInt(d.age, 10) || null,
+      gender: d.gender,
+      attendingDoctor: d.attendingDoctor ?? null,
+      notes: d.notes ?? null,
+      isRegistered: true,
+      registrationDate: new Date(),
+    },
+  })
+
   return {
     success: true,
     data: {
-      ...result.data,
+      deceasedName: d.deceasedName,
+      dateOfDeath: d.dateOfDeath,
+      causeOfDeath: d.causeOfDeath,
+      placeOfDeath: d.placeOfDeath,
       certNumber,
       issuedDate: new Date().toISOString().slice(0, 10),
     },

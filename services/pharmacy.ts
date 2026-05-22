@@ -1,26 +1,100 @@
-import { MOCK_PHARMACIST, MOCK_PRESCRIPTIONS, type PharmacyRx } from '@/lib/mock-pharmacy-data'
+import { prisma } from '@/lib/prisma'
 
-export async function getPharmacistProfile(_userId: string) {
-  return MOCK_PHARMACIST
-}
-
-export async function getPharmacyStats(_userId: string) {
+export async function getPharmacistProfile(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, name: true, email: true, phone: true },
+  })
+  if (!user) throw new Error('Pharmacist not found')
   return {
-    pending: MOCK_PRESCRIPTIONS.filter((r) => r.status === 'pending').length,
-    verified: MOCK_PRESCRIPTIONS.filter((r) => r.status === 'verified').length,
-    dispensedToday: MOCK_PRESCRIPTIONS.filter(
-      (r) => r.status === 'dispensed' && r.dispensedAt === new Date().toISOString().slice(0, 10)
-    ).length,
-    totalDispensed: MOCK_PRESCRIPTIONS.filter((r) => r.status === 'dispensed').length,
+    id: user.id,
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone ?? '',
+    pharmacyName: '',
+    licenseNumber: '',
+    address: '',
   }
 }
 
-export async function getAllPrescriptions(_userId: string): Promise<PharmacyRx[]> {
-  return MOCK_PRESCRIPTIONS
+export async function getPharmacyStats(_userId: string) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const [pending, verified, dispensedToday, totalDispensed] = await Promise.all([
+    prisma.prescription.count({ where: { status: 'active' } }),
+    prisma.prescription.count({ where: { status: 'active' } }),
+    prisma.prescription.count({
+      where: { status: 'dispensed', dispensedAt: { gte: today } },
+    }),
+    prisma.prescription.count({ where: { status: 'dispensed' } }),
+  ])
+
+  return { pending, verified, dispensedToday, totalDispensed }
 }
 
-export async function getPrescriptionById(_userId: string, id: string): Promise<PharmacyRx> {
-  const rx = MOCK_PRESCRIPTIONS.find((r) => r.id === id)
-  if (!rx) throw new Error('Prescription not found')
-  return rx
+export async function getAllPrescriptions(_userId: string) {
+  const rows = await prisma.prescription.findMany({
+    orderBy: { prescribedAt: 'desc' },
+    include: {
+      patient: { include: { user: { select: { name: true, phone: true } } } },
+      doctor: { include: { user: { select: { name: true } } } },
+      items: true,
+    },
+  })
+
+  return rows.map((p) => ({
+    id: p.id,
+    prescriptionDate: p.prescribedAt.toISOString().slice(0, 10),
+    patientName: p.patient.user.name,
+    patientDob: p.patient.dateOfBirth?.toISOString().slice(0, 10) ?? '',
+    patientPhone: p.patient.user.phone ?? '',
+    doctorName: p.doctor.user.name,
+    doctorLicense: p.doctor.licenseNumber,
+    hospital: '',
+    items: p.items.map((i) => ({
+      medicine: i.medicineName,
+      dose: i.dosage,
+      frequency: i.frequency,
+      duration: i.duration ?? '',
+      quantity: i.quantity ? String(i.quantity) : '',
+    })),
+    notes: p.pharmacyNotes ?? '',
+    status: p.status as 'active' | 'dispensed' | 'expired' | 'cancelled',
+    dispensedAt: p.dispensedAt?.toISOString().slice(0, 10),
+  }))
+}
+
+export async function getPrescriptionById(_userId: string, id: string) {
+  const p = await prisma.prescription.findUnique({
+    where: { id },
+    include: {
+      patient: { include: { user: { select: { name: true, phone: true } } } },
+      doctor: { include: { user: { select: { name: true } } } },
+      items: true,
+    },
+  })
+  if (!p) throw new Error('Prescription not found')
+
+  return {
+    id: p.id,
+    prescriptionDate: p.prescribedAt.toISOString().slice(0, 10),
+    patientName: p.patient.user.name,
+    patientDob: p.patient.dateOfBirth?.toISOString().slice(0, 10) ?? '',
+    patientPhone: p.patient.user.phone ?? '',
+    doctorName: p.doctor.user.name,
+    doctorLicense: p.doctor.licenseNumber,
+    hospital: '',
+    items: p.items.map((i) => ({
+      medicine: i.medicineName,
+      dose: i.dosage,
+      frequency: i.frequency,
+      duration: i.duration ?? '',
+      quantity: i.quantity ? String(i.quantity) : '',
+    })),
+    notes: p.pharmacyNotes ?? '',
+    status: p.status as 'active' | 'dispensed' | 'expired' | 'cancelled',
+    dispensedAt: p.dispensedAt?.toISOString().slice(0, 10),
+  }
 }
