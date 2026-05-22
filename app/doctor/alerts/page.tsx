@@ -42,7 +42,7 @@ export default async function DiseaseAlertsPage() {
       </div>
 
       {/* Summary bar */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { label: 'High Severity', count: alerts.filter((a) => a.severity === 'high').length, color: 'text-red-600', bg: 'bg-red-50 border-red-200' },
           { label: 'Medium Severity', count: alerts.filter((a) => a.severity === 'medium').length, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },

@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
 import {
-  Heart,
   LayoutDashboard,
   Search,
   Bell,
@@ -32,7 +31,7 @@ const NAV_ITEMS = [
   { href: '/doctor/death', label: 'Death Records', icon: Skull },
 ]
 
-export default function DoctorSidebar() {
+export default function DoctorSidebar({ doctorName }: { doctorName: string }) {
   const pathname = usePathname()
   const { lang } = useLanguage()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -61,6 +60,18 @@ export default function DoctorSidebar() {
           >
             <X className="w-4 h-4 text-slate-500" />
           </button>
+        </div>
+      </div>
+
+      <div className="px-4 py-3 border-b border-slate-100 bg-blue-50">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+            <Stethoscope className="w-4 h-4 text-blue-600" />
+          </div>
+          <div>
+            <div className="text-xs font-semibold text-slate-800">{doctorName}</div>
+            <div className="text-xs text-slate-500">Doctor</div>
+          </div>
         </div>
       </div>
 
