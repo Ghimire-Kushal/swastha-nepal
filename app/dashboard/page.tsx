@@ -1,60 +1,237 @@
-import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth'
-import { logout } from '@/app/actions/auth'
-import { ROLE_LABELS, ROLE_META } from '@/types/auth'
-import { Heart } from 'lucide-react'
+import { redirect } from 'next/navigation'
+import {
+  getPatientProfile,
+  getUpcomingAppointments,
+  getPrescriptions,
+  getAIHealthSummary,
+  getEmergencyInfo,
+} from '@/services/patient'
+import { BLOOD_TYPE_DISPLAY } from '@/lib/mock-data'
+import { Calendar, FileText, Heart, AlertTriangle, CheckCircle, AlertCircle, Clock } from 'lucide-react'
 import Link from 'next/link'
+
+function calcAge(dob: Date) {
+  const today = new Date()
+  let age = today.getFullYear() - dob.getFullYear()
+  const m = today.getMonth() - dob.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--
+  return age
+}
 
 export default async function DashboardPage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const meta = ROLE_META[session.role]
+  const [patient, appointments, prescriptions, aiSummary, emergencyInfo] = await Promise.all([
+    getPatientProfile(session.sub),
+    getUpcomingAppointments(session.sub),
+    getPrescriptions(session.sub),
+    getAIHealthSummary(session.sub),
+    getEmergencyInfo(session.sub),
+  ])
+
+  const activePrescriptions = prescriptions.filter((p) => p.status === 'active')
+  const age = calcAge(patient.dateOfBirth)
+
+  const findingIcon = (type: string) => {
+    if (type === 'critical') return <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+    if (type === 'warning') return <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+    return <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+  }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Top nav */}
-      <nav className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-            <Heart className="w-4 h-4 text-white" fill="white" />
-          </div>
-          <span className="font-bold text-slate-900">
-            Swastha Nepal <span className="text-emerald-600">AI</span>
-          </span>
-        </Link>
+    <div className="max-w-6xl mx-auto space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">
+          Good day, {patient.name.split(' ')[0]} 👋
+        </h1>
+        <p className="text-slate-500 text-sm mt-0.5">Here is your health overview</p>
+      </div>
 
-        <form action={logout}>
-          <button
-            type="submit"
-            className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            Sign out
-          </button>
-        </form>
-      </nav>
-
-      {/* Content */}
-      <main className="max-w-4xl mx-auto px-6 py-16">
-        <div className="text-center">
-          <span className="text-5xl mb-4 block">{meta.icon}</span>
-          <h1 className="text-3xl font-black text-slate-900 mb-2">
-            Welcome back, {session.name}!
-          </h1>
-          <p className="text-slate-500 mb-1">
-            Logged in as{' '}
-            <span className="font-semibold text-emerald-600">
-              {ROLE_LABELS[session.role]}
-            </span>
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Blood Type</p>
+          <p className="text-3xl font-black text-red-500">
+            {BLOOD_TYPE_DISPLAY[patient.bloodType] ?? patient.bloodType}
           </p>
-          <p className="text-slate-400 text-sm mb-8">{session.email}</p>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Age</p>
+          <p className="text-3xl font-black text-slate-900">{age}</p>
+          <p className="text-xs text-slate-400">years</p>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Active Rx</p>
+          <p className="text-3xl font-black text-emerald-600">{activePrescriptions.length}</p>
+          <p className="text-xs text-slate-400">prescriptions</p>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-4">
+          <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mb-1">Health Score</p>
+          <p className="text-3xl font-black text-blue-600">{aiSummary.healthScore}</p>
+          <p className="text-xs text-slate-400">out of 100</p>
+        </div>
+      </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full text-emerald-700 text-sm font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Dashboard coming in the next step
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* AI Health Summary */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+              <Heart className="w-4 h-4 text-emerald-600" />
+              AI Health Summary
+            </h2>
+            <span className="text-xs text-slate-400">Updated {aiSummary.lastUpdated}</span>
+          </div>
+
+          {/* Risk scores */}
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            {aiSummary.riskScores.map((r) => (
+              <div key={r.name} className="text-center">
+                <div
+                  className="text-2xl font-black"
+                  style={{ color: r.color }}
+                >
+                  {r.score}%
+                </div>
+                <div className="text-xs text-slate-500">{r.name} Risk</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Findings */}
+          <div className="space-y-2">
+            {aiSummary.findings.map((f, i) => (
+              <div key={i} className="flex items-start gap-2 text-sm">
+                {findingIcon(f.type)}
+                <span className="text-slate-700">{f.text}</span>
+              </div>
+            ))}
+          </div>
+
+          <Link
+            href="/dashboard/medical-history"
+            className="mt-4 inline-flex items-center text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+          >
+            View full medical history →
+          </Link>
+        </div>
+
+        {/* Right column */}
+        <div className="space-y-4">
+          {/* Emergency quick info */}
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              Emergency Info
+            </h3>
+            <div className="space-y-1.5 text-xs text-red-800">
+              <div>
+                <span className="font-medium">Blood Type:</span>{' '}
+                {BLOOD_TYPE_DISPLAY[emergencyInfo.bloodType]}
+              </div>
+              <div>
+                <span className="font-medium">Allergies:</span>{' '}
+                {emergencyInfo.criticalConditions.length
+                  ? emergencyInfo.criticalConditions.join(', ')
+                  : 'None recorded'}
+              </div>
+              {emergencyInfo.emergencyContacts[0] && (
+                <div>
+                  <span className="font-medium">Emergency:</span>{' '}
+                  {emergencyInfo.emergencyContacts[0].name} —{' '}
+                  {emergencyInfo.emergencyContacts[0].phone}
+                </div>
+              )}
+            </div>
+            <Link
+              href="/dashboard/qr-card"
+              className="mt-3 block text-center text-xs font-medium text-red-600 hover:text-red-700 border border-red-200 rounded-lg py-1.5 hover:bg-red-100 transition-colors"
+            >
+              View QR Health Card
+            </Link>
+          </div>
+
+          {/* Upcoming appointments */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-blue-500" />
+              Upcoming Appointments
+            </h3>
+            {appointments.length === 0 ? (
+              <p className="text-xs text-slate-400">No upcoming appointments</p>
+            ) : (
+              <div className="space-y-3">
+                {appointments.map((apt) => (
+                  <div key={apt.id} className="text-xs">
+                    <div className="font-medium text-slate-800">{apt.doctor}</div>
+                    <div className="text-slate-500">{apt.specialty}</div>
+                    <div className="flex items-center gap-1 text-slate-400 mt-0.5">
+                      <Clock className="w-3 h-3" />
+                      {new Date(apt.scheduledAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}{' '}
+                      ·{' '}
+                      {new Date(apt.scheduledAt).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Active prescriptions */}
+          <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-purple-500" />
+              Active Prescriptions
+            </h3>
+            {activePrescriptions.length === 0 ? (
+              <p className="text-xs text-slate-400">No active prescriptions</p>
+            ) : (
+              <div className="space-y-2">
+                {activePrescriptions.flatMap((rx) =>
+                  rx.items.map((item, i) => (
+                    <div key={`${rx.id}-${i}`} className="text-xs">
+                      <span className="font-medium text-slate-800">{item.medicineName}</span>{' '}
+                      <span className="text-slate-500">{item.dosage}</span>
+                      <div className="text-slate-400">{item.frequency}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+            <Link
+              href="/dashboard/prescriptions"
+              className="mt-3 block text-center text-xs font-medium text-purple-600 hover:text-purple-700"
+            >
+              View all prescriptions →
+            </Link>
           </div>
         </div>
-      </main>
+      </div>
+
+      {/* Recommendations */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <h2 className="font-semibold text-slate-900 mb-4">AI Recommendations</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {aiSummary.recommendations.map((rec, i) => (
+            <div key={i} className="flex items-start gap-2 text-sm text-slate-700">
+              <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                {i + 1}
+              </span>
+              {rec}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
