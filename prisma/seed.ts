@@ -6,7 +6,7 @@ import { USER_ROLES } from '../types/auth'
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const prisma = new PrismaClient({ adapter })
 
-const SEED_PASSWORD = 'Swastha@123'
+const SEED_PASSWORD = process.env.SEED_PASSWORD ?? (() => { throw new Error('SEED_PASSWORD env var is required') })()
 
 async function main() {
   console.log('🌱 Seeding database...')
