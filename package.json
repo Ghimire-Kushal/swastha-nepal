@@ -24,6 +24,7 @@
     "@types/pg": "^8.20.0",
     "axios": "^1.16.1",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.10.0",
     "framer-motion": "^12.40.0",
     "jose": "^6.2.3",
     "lucide-react": "^1.16.0",

@@ -13,6 +13,7 @@ import {
   Syringe,
   QrCode,
   Brain,
+  Shield,
   LogOut,
 } from 'lucide-react'
 import LanguageToggle from '@/components/LanguageToggle'
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/vaccinations', label: 'Vaccinations', icon: Syringe },
   { href: '/dashboard/qr-card', label: 'QR Health Card', icon: QrCode },
   { href: '/dashboard/ai-analysis', label: 'AI Analysis', icon: Brain },
+  { href: '/dashboard/privacy', label: 'Privacy', icon: Shield },
 ]
 
 export default function Sidebar() {

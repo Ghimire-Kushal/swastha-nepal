@@ -9,7 +9,20 @@ function roleHome(role: SessionPayload['role']): string {
   if (role === 'doctor') return '/doctor'
   if (role === 'lab_technician') return '/lab'
   if (role === 'pharmacist') return '/pharmacy'
+  if (role === 'hospital_admin' || role === 'government_admin') return '/admin'
   return '/dashboard'
+}
+
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(self)'
+  )
+  return response
 }
 
 export async function middleware(request: NextRequest) {
@@ -25,27 +38,27 @@ export async function middleware(request: NextRequest) {
     if ((pathname === '/login' || pathname === '/register') && token) {
       try {
         const session = await verifyToken(token)
-        return NextResponse.redirect(new URL(roleHome(session.role), request.url))
+        return addSecurityHeaders(NextResponse.redirect(new URL(roleHome(session.role), request.url)))
       } catch {
         // Invalid token — let them proceed to login
       }
     }
-    return NextResponse.next()
+    return addSecurityHeaders(NextResponse.next())
   }
 
   if (!token) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('from', pathname)
-    return NextResponse.redirect(loginUrl)
+    return addSecurityHeaders(NextResponse.redirect(loginUrl))
   }
 
   try {
     await verifyToken(token)
-    return NextResponse.next()
+    return addSecurityHeaders(NextResponse.next())
   } catch {
     const response = NextResponse.redirect(new URL('/login', request.url))
     response.cookies.delete('auth-token')
-    return response
+    return addSecurityHeaders(response)
   }
 }
 

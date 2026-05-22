@@ -1,9 +1,10 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { uploadMedicalDocument, type DoctorActionState } from '@/app/actions/doctor'
-import { Upload, CheckCircle, FileText } from 'lucide-react'
+import { CheckCircle, FileText } from 'lucide-react'
 import { MOCK_DOCTOR_PATIENTS } from '@/lib/mock-doctor-data'
+import FileUpload, { type UploadedFile } from '@/components/FileUpload'
 
 const REPORT_TYPES = [
   { value: 'xray', label: 'X-Ray' },
@@ -19,6 +20,7 @@ export default function DoctorUploadReportPage() {
     uploadMedicalDocument,
     undefined
   )
+  const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null)
 
   function err(field: string) {
     return state?.errors?.[field]?.[0]
@@ -41,6 +43,10 @@ export default function DoctorUploadReportPage() {
       )}
 
       <form action={action} className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
+        {/* Hidden field — Cloudinary URL set after upload */}
+        <input type="hidden" name="fileUrl" value={uploadedFile?.url ?? ''} />
+        <input type="hidden" name="filePublicId" value={uploadedFile?.publicId ?? ''} />
+
         {/* Patient */}
         <div>
           <label htmlFor="patientId" className="block text-sm font-medium text-slate-700 mb-1">
@@ -76,7 +82,6 @@ export default function DoctorUploadReportPage() {
               </label>
             ))}
           </div>
-          {err('reportType') && <p className="text-red-500 text-xs mt-1">{err('reportType')}</p>}
         </div>
 
         {/* Title */}
@@ -91,24 +96,24 @@ export default function DoctorUploadReportPage() {
             placeholder="e.g. Chest X-Ray — Baseline Assessment"
             className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          {err('reportTitle') && <p className="text-red-500 text-xs mt-1">{err('reportTitle')}</p>}
         </div>
 
-        {/* File upload */}
+        {/* Cloudinary file upload */}
         <div>
-          <label htmlFor="file" className="block text-sm font-medium text-slate-700 mb-1">
+          <label className="block text-sm font-medium text-slate-700 mb-2">
             File <span className="text-red-500">*</span>
-            <span className="text-slate-400 font-normal ml-1">(JPEG, PNG, PDF, DICOM — max 50 MB)</span>
+            <span className="text-slate-400 font-normal ml-1">(JPEG, PNG, PDF — max 20 MB)</span>
           </label>
-          <label
-            htmlFor="file"
-            className="flex flex-col items-center justify-center gap-2 w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
-          >
-            <Upload className="w-6 h-6 text-slate-400" />
-            <span className="text-sm text-slate-500">Click to choose file or drag and drop</span>
-            <input id="file" name="file" type="file" accept=".jpg,.jpeg,.png,.pdf,.dcm" className="sr-only" />
-          </label>
-          {err('file') && <p className="text-red-500 text-xs mt-1">{err('file')}</p>}
+          <FileUpload
+            fileType="scan"
+            accept=".jpg,.jpeg,.png,.pdf,.webp"
+            maxSizeMB={20}
+            label="Upload scan or report file"
+            onUpload={setUploadedFile}
+          />
+          {!uploadedFile && state?.message && (
+            <p className="text-xs text-amber-600 mt-1">Upload a file before submitting</p>
+          )}
         </div>
 
         {/* Notes */}
@@ -133,15 +138,13 @@ export default function DoctorUploadReportPage() {
 
         <button
           type="submit"
-          disabled={pending}
+          disabled={pending || !uploadedFile}
           className="w-full py-3 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors flex items-center justify-center gap-2"
         >
-          {pending ? (
-            'Uploading…'
-          ) : (
+          {pending ? 'Saving…' : (
             <>
               <FileText className="w-4 h-4" />
-              Upload Report
+              Save Report
             </>
           )}
         </button>

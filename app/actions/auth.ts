@@ -2,9 +2,10 @@
 
 import { redirect } from 'next/navigation'
 import { LoginSchema, RegisterSchema } from '@/lib/definitions'
-import { signToken, setAuthCookie, clearAuthCookie } from '@/lib/auth'
+import { signToken, setAuthCookie, clearAuthCookie, getSession } from '@/lib/auth'
 import { hashPassword, verifyPassword } from '@/lib/password'
 import { findUserByEmail, createUser } from '@/lib/db'
+import { writeAuditLog } from '@/lib/audit'
 import type { AuthFormState } from '@/types/auth'
 
 export async function login(
@@ -22,11 +23,13 @@ export async function login(
   const user = await findUserByEmail(email)
 
   if (!user) {
+    writeAuditLog({ userId: 'unknown', userEmail: email, userRole: 'unknown', action: 'auth.login_failed', success: false })
     return { message: 'Invalid email or password.' }
   }
 
   const passwordMatch = await verifyPassword(password, user.passwordHash)
   if (!passwordMatch) {
+    writeAuditLog({ userId: user.id, userEmail: user.email, userRole: user.role, action: 'auth.login_failed', success: false })
     return { message: 'Invalid email or password.' }
   }
 
@@ -38,6 +41,7 @@ export async function login(
   })
 
   await setAuthCookie(token)
+  writeAuditLog({ userId: user.id, userEmail: user.email, userRole: user.role, action: 'auth.login', success: true })
   redirect('/dashboard')
 }
 
@@ -70,10 +74,15 @@ export async function register(
   })
 
   await setAuthCookie(token)
+  writeAuditLog({ userId: user.id, userEmail: user.email, userRole: user.role, action: 'auth.login', details: 'new registration', success: true })
   redirect('/dashboard')
 }
 
 export async function logout(): Promise<void> {
+  const session = await getSession()
+  if (session) {
+    writeAuditLog({ userId: session.sub, userEmail: session.email, userRole: session.role, action: 'auth.logout', success: true })
+  }
   await clearAuthCookie()
   redirect('/login')
 }

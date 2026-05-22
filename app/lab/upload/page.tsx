@@ -2,8 +2,9 @@
 
 import { useActionState, useState } from 'react'
 import { uploadLabReport, type LabActionState } from '@/app/actions/lab'
-import { Plus, Trash2, CheckCircle, Upload, AlertTriangle } from 'lucide-react'
+import { Plus, Trash2, CheckCircle, AlertTriangle } from 'lucide-react'
 import { MOCK_PENDING_ORDERS } from '@/lib/mock-lab-data'
+import FileUpload, { type UploadedFile } from '@/components/FileUpload'
 
 interface ResultRow {
   id: number

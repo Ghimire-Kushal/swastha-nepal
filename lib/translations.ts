@@ -10,6 +10,7 @@ export const dashboardUI: Record<string, Record<'en' | 'np', string>> = {
   'Vaccinations':     { en: 'Vaccinations',    np: 'खोपहरू' },
   'QR Health Card':   { en: 'QR Health Card',  np: 'QR स्वास्थ्य कार्ड' },
   'AI Analysis':      { en: 'AI Analysis',     np: 'AI विश्लेषण' },
+  'Privacy':          { en: 'Privacy',         np: 'गोपनीयता' },
   'Sign out':         { en: 'Sign out',        np: 'लग आउट' },
   // Doctor sidebar
   'Patients':         { en: 'Patients',        np: 'बिरामीहरू' },
