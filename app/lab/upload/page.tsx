@@ -31,6 +31,7 @@ export default function LabUploadPage() {
   const [rows, setRows] = useState<ResultRow[]>([
     { id: _nextId++, parameter: '', value: '', unit: '', referenceRange: '', isAbnormal: false },
   ])
+  const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null)
 
   function addRow() {
     setRows((prev) => [
@@ -261,18 +262,21 @@ export default function LabUploadPage() {
 
         {/* File + options */}
         <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+          {/* Hidden Cloudinary URL fields */}
+          <input type="hidden" name="fileUrl" value={uploadedFile?.url ?? ''} />
+          <input type="hidden" name="filePublicId" value={uploadedFile?.publicId ?? ''} />
+
           <div>
-            <label htmlFor="file" className="block text-sm font-medium text-slate-700 mb-1">
-              Attach Report File <span className="text-slate-400 font-normal">(optional — PDF, JPEG, DICOM)</span>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Attach Report File <span className="text-slate-400 font-normal">(optional — PDF, JPEG)</span>
             </label>
-            <label
-              htmlFor="file"
-              className="flex items-center justify-center gap-2 w-full h-20 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors"
-            >
-              <Upload className="w-5 h-5 text-slate-400" />
-              <span className="text-sm text-slate-500">Click to attach file</span>
-              <input id="file" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png,.dcm" className="sr-only" />
-            </label>
+            <FileUpload
+              fileType="lab_report"
+              accept=".pdf,.jpg,.jpeg,.png,.webp"
+              maxSizeMB={20}
+              label="Upload lab report or scan"
+              onUpload={setUploadedFile}
+            />
           </div>
 
           <div>
