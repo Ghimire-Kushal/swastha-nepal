@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /Users/kushal/swastha-nepal-ai/components /Users/kushal/swastha-nepal-ai/lib /Users/kushal/swastha-nepal-ai/services /Users/kushal/swastha-nepal-ai/types /Users/kushal/swastha-nepal-ai/hooks /Users/kushal/swastha-nepal-ai/styles && echo \"Directories created\")"
+    ],
+    "additionalDirectories": [
+      "/Users/kushal/swastha-nepal-ai"
+    ]
+  }
+}
