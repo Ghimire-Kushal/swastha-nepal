@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyToken } from '@/lib/auth'
+import type { SessionPayload } from '@/types/auth'
 
 const PUBLIC_PATHS = new Set(['/', '/login', '/register'])
+
+function roleHome(role: SessionPayload['role']): string {
+  if (role === 'doctor') return '/doctor'
+  if (role === 'lab_technician') return '/lab'
+  return '/dashboard'
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -11,11 +18,10 @@ export async function middleware(request: NextRequest) {
   const isPublic = PUBLIC_PATHS.has(pathname) || pathname.startsWith('/api/')
 
   if (isPublic) {
-    // Redirect authenticated users away from login/register
     if ((pathname === '/login' || pathname === '/register') && token) {
       try {
-        await verifyToken(token)
-        return NextResponse.redirect(new URL('/dashboard', request.url))
+        const session = await verifyToken(token)
+        return NextResponse.redirect(new URL(roleHome(session.role), request.url))
       } catch {
         // Invalid token — let them proceed to login
       }
@@ -23,7 +29,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // All other routes require a valid session
   if (!token) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('from', pathname)
