@@ -1,0 +1,493 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  patient
+  doctor
+  nurse
+  lab_technician
+  pharmacist
+  hospital_admin
+  government_admin
+}
+
+enum Gender {
+  male
+  female
+  other
+}
+
+enum BloodType {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  O_POS
+  O_NEG
+  AB_POS
+  AB_NEG
+}
+
+enum AppointmentStatus {
+  scheduled
+  confirmed
+  in_progress
+  completed
+  cancelled
+  no_show
+}
+
+enum AppointmentType {
+  in_person
+  telemedicine
+  home_visit
+}
+
+enum PrescriptionStatus {
+  active
+  dispensed
+  expired
+  cancelled
+}
+
+enum LabReportStatus {
+  pending
+  processing
+  completed
+  cancelled
+}
+
+enum AllergenType {
+  drug
+  food
+  environmental
+  latex
+  other
+}
+
+enum AllergenSeverity {
+  mild
+  moderate
+  severe
+  life_threatening
+}
+
+enum DeliveryType {
+  normal
+  cesarean
+  assisted
+}
+
+enum MannerOfDeath {
+  natural
+  accident
+  suicide
+  homicide
+  undetermined
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  name            String    @db.VarChar(100)
+  email           String    @unique @db.VarChar(255)
+  phone           String?   @db.VarChar(20)
+  passwordHash    String    @map("password_hash")
+  role            UserRole
+  isActive        Boolean   @default(true) @map("is_active")
+  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(6)
+  lastLoginAt     DateTime? @map("last_login_at") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient                Patient?
+  doctor                 Doctor?
+  auditLogs              AuditLog[]
+  vaccinesAdministered   Vaccination[]  @relation("VaccinationAdministeredBy")
+  allergiesRecorded      Allergy[]      @relation("AllergyRecordedBy")
+  labReportsProcessed    LabReport[]    @relation("LabReportProcessedBy")
+  prescriptionsDispensed Prescription[] @relation("PrescriptionDispensedBy")
+  birthRecordsRegistered BirthRecord[]  @relation("BirthRecordRegisteredBy")
+  deathRecordsRegistered DeathRecord[]  @relation("DeathRecordRegisteredBy")
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Patient {
+  id                String     @id @default(uuid()) @db.Uuid
+  userId            String     @unique @map("user_id") @db.Uuid
+  dateOfBirth       DateTime?  @map("date_of_birth") @db.Date
+  gender            Gender?
+  bloodType         BloodType? @map("blood_type")
+  address           String?
+  district          String?    @db.VarChar(50)
+  province          String?    @db.VarChar(50)
+  citizenshipNumber String?    @unique @map("citizenship_number") @db.VarChar(50)
+  guardianName      String?    @map("guardian_name") @db.VarChar(100)
+  guardianPhone     String?    @map("guardian_phone") @db.VarChar(20)
+  profilePhotoUrl   String?    @map("profile_photo_url")
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  medicalRecords MedicalRecord[]
+  prescriptions  Prescription[]
+  labReports     LabReport[]
+  vaccinations   Vaccination[]
+  allergies      Allergy[]
+  appointments   Appointment[]
+  emergencyInfo  EmergencyInfo?
+  birthRecord    BirthRecord?
+  deathRecord    DeathRecord?
+
+  @@map("patients")
+}
+
+model Doctor {
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @unique @map("user_id") @db.Uuid
+  licenseNumber     String   @unique @map("license_number") @db.VarChar(50)
+  specialization    String   @db.VarChar(100)
+  subspecialization String?  @db.VarChar(100)
+  qualifications    String[]
+  experienceYears   Int      @default(0) @map("experience_years")
+  consultationFee   Decimal? @map("consultation_fee") @db.Decimal(10, 2)
+  availableDays     String[] @map("available_days")
+  availableFrom     String?  @map("available_from") @db.VarChar(5)
+  availableTo       String?  @map("available_to") @db.VarChar(5)
+  bio               String?
+  isVerified        Boolean  @default(false) @map("is_verified")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  medicalRecords MedicalRecord[]
+  prescriptions  Prescription[]
+  labReports     LabReport[]     @relation("LabReportOrderedBy")
+  appointments   Appointment[]
+
+  @@index([specialization])
+  @@index([isVerified])
+  @@map("doctors")
+}
+
+model MedicalRecord {
+  id             String    @id @default(uuid()) @db.Uuid
+  patientId      String    @map("patient_id") @db.Uuid
+  doctorId       String?   @map("doctor_id") @db.Uuid
+  recordType     String    @map("record_type") @db.VarChar(50)
+  title          String    @db.VarChar(255)
+  description    String?
+  diagnosis      String?
+  icdCode        String?   @map("icd_code") @db.VarChar(20)
+  symptoms       String[]
+  notes          String?
+  attachments    String[]
+  visitDate      DateTime  @default(now()) @map("visit_date") @db.Timestamptz(6)
+  followUpDate   DateTime? @map("follow_up_date") @db.Timestamptz(6)
+  isConfidential Boolean   @default(false) @map("is_confidential")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient       Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor        Doctor?        @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+  prescriptions Prescription[]
+  labReports    LabReport[]
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([visitDate])
+  @@index([icdCode])
+  @@map("medical_records")
+}
+
+model Prescription {
+  id              String             @id @default(uuid()) @db.Uuid
+  patientId       String             @map("patient_id") @db.Uuid
+  doctorId        String             @map("doctor_id") @db.Uuid
+  medicalRecordId String?            @map("medical_record_id") @db.Uuid
+  status          PrescriptionStatus @default(active)
+  prescribedAt    DateTime           @default(now()) @map("prescribed_at") @db.Timestamptz(6)
+  validUntil      DateTime?          @map("valid_until") @db.Timestamptz(6)
+  pharmacyNotes   String?            @map("pharmacy_notes")
+  dispensedAt     DateTime?          @map("dispensed_at") @db.Timestamptz(6)
+  dispensedById   String?            @map("dispensed_by") @db.Uuid
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient       Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor        Doctor         @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  medicalRecord MedicalRecord? @relation(fields: [medicalRecordId], references: [id], onDelete: SetNull)
+  dispensedBy   User?          @relation("PrescriptionDispensedBy", fields: [dispensedById], references: [id], onDelete: SetNull)
+  items         PrescriptionItem[]
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+  @@map("prescriptions")
+}
+
+model PrescriptionItem {
+  id             String   @id @default(uuid()) @db.Uuid
+  prescriptionId String   @map("prescription_id") @db.Uuid
+  medicineName   String   @map("medicine_name") @db.VarChar(200)
+  genericName    String?  @map("generic_name") @db.VarChar(200)
+  dosage         String   @db.VarChar(100)
+  frequency      String   @db.VarChar(100)
+  duration       String?  @db.VarChar(100)
+  route          String?  @db.VarChar(50)
+  instructions   String?
+  quantity       Int?
+  refillsAllowed Int      @default(0) @map("refills_allowed")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  @@index([prescriptionId])
+  @@map("prescription_items")
+}
+
+model LabReport {
+  id                String          @id @default(uuid()) @db.Uuid
+  patientId         String          @map("patient_id") @db.Uuid
+  orderedById       String?         @map("ordered_by") @db.Uuid
+  processedById     String?         @map("processed_by") @db.Uuid
+  medicalRecordId   String?         @map("medical_record_id") @db.Uuid
+  testName          String          @map("test_name") @db.VarChar(200)
+  testCode          String?         @map("test_code") @db.VarChar(50)
+  category          String?         @db.VarChar(100)
+  sampleType        String?         @map("sample_type") @db.VarChar(100)
+  sampleCollectedAt DateTime?       @map("sample_collected_at") @db.Timestamptz(6)
+  result            String?
+  resultValue       Decimal?        @map("result_value") @db.Decimal(15, 4)
+  referenceRange    String?         @map("reference_range") @db.VarChar(100)
+  unit              String?         @db.VarChar(50)
+  status            LabReportStatus @default(pending)
+  isAbnormal        Boolean         @default(false) @map("is_abnormal")
+  notes             String?
+  reportUrl         String?         @map("report_url")
+  completedAt       DateTime?       @map("completed_at") @db.Timestamptz(6)
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient       Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  orderedBy     Doctor?        @relation("LabReportOrderedBy", fields: [orderedById], references: [id], onDelete: SetNull)
+  processedBy   User?          @relation("LabReportProcessedBy", fields: [processedById], references: [id], onDelete: SetNull)
+  medicalRecord MedicalRecord? @relation(fields: [medicalRecordId], references: [id], onDelete: SetNull)
+
+  @@index([patientId])
+  @@index([orderedById])
+  @@index([status])
+  @@index([isAbnormal])
+  @@map("lab_reports")
+}
+
+model Vaccination {
+  id               String   @id @default(uuid()) @db.Uuid
+  patientId        String   @map("patient_id") @db.Uuid
+  administeredById String?  @map("administered_by") @db.Uuid
+  vaccineName      String   @map("vaccine_name") @db.VarChar(200)
+  vaccineBrand     String?  @map("vaccine_brand") @db.VarChar(100)
+  lotNumber        String?  @map("lot_number") @db.VarChar(100)
+  doseNumber       Int      @default(1) @map("dose_number")
+  totalDoses       Int      @default(1) @map("total_doses")
+  administeredAt   DateTime @default(now()) @map("administered_at") @db.Timestamptz(6)
+  nextDoseDue      DateTime? @map("next_dose_due") @db.Timestamptz(6)
+  site             String?  @db.VarChar(100)
+  route            String?  @db.VarChar(50)
+  facility         String?  @db.VarChar(200)
+  adverseReactions String?  @map("adverse_reactions")
+  certificateUrl   String?  @map("certificate_url")
+  notes            String?
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient        Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  administeredBy User?   @relation("VaccinationAdministeredBy", fields: [administeredById], references: [id], onDelete: SetNull)
+
+  @@index([patientId])
+  @@index([vaccineName])
+  @@index([administeredAt])
+  @@map("vaccinations")
+}
+
+model Allergy {
+  id           String           @id @default(uuid()) @db.Uuid
+  patientId    String           @map("patient_id") @db.Uuid
+  recordedById String?          @map("recorded_by") @db.Uuid
+  allergenType AllergenType     @map("allergen_type")
+  allergenName String           @map("allergen_name") @db.VarChar(200)
+  reaction     String           @db.VarChar(500)
+  severity     AllergenSeverity
+  onsetDate    DateTime?        @map("onset_date") @db.Date
+  isActive     Boolean          @default(true) @map("is_active")
+  notes        String?
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient    Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  recordedBy User?   @relation("AllergyRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@index([patientId])
+  @@index([severity])
+  @@index([isActive])
+  @@map("allergies")
+}
+
+model Appointment {
+  id              String            @id @default(uuid()) @db.Uuid
+  patientId       String            @map("patient_id") @db.Uuid
+  doctorId        String            @map("doctor_id") @db.Uuid
+  status          AppointmentStatus @default(scheduled)
+  type            AppointmentType   @default(in_person)
+  reason          String?           @db.VarChar(500)
+  notes           String?
+  scheduledAt     DateTime          @map("scheduled_at") @db.Timestamptz(6)
+  durationMinutes Int               @default(30) @map("duration_minutes")
+  location        String?
+  videoLink       String?           @map("video_link")
+  reminderSent    Boolean           @default(false) @map("reminder_sent")
+  followUpOf      String?           @map("follow_up_of") @db.Uuid
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient   Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor    Doctor       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  parent    Appointment? @relation("AppointmentFollowUp", fields: [followUpOf], references: [id], onDelete: SetNull)
+  followUps Appointment[] @relation("AppointmentFollowUp")
+
+  @@index([patientId, scheduledAt])
+  @@index([doctorId, scheduledAt])
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("appointments")
+}
+
+model EmergencyInfo {
+  id                 String     @id @default(uuid()) @db.Uuid
+  patientId          String     @unique @map("patient_id") @db.Uuid
+  bloodType          BloodType? @map("blood_type")
+  organDonor         Boolean    @default(false) @map("organ_donor")
+  criticalConditions String[]   @map("critical_conditions")
+  currentMedications String[]   @map("current_medications")
+  // JSON: [{ name, relationship, phone, isPrimary }]
+  emergencyContacts  Json       @default("[]") @map("emergency_contacts")
+  insuranceProvider  String?    @map("insurance_provider") @db.VarChar(200)
+  insurancePolicyNum String?    @map("insurance_policy_number") @db.VarChar(100)
+  advanceDirective   String?    @map("advance_directive")
+  qrHash             String?    @unique @map("qr_hash") @db.VarChar(64)
+  lastUpdatedAt      DateTime   @default(now()) @map("last_updated_at") @db.Timestamptz(6)
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("emergency_info")
+}
+
+model BirthRecord {
+  id                     String       @id @default(uuid()) @db.Uuid
+  patientId              String?      @unique @map("patient_id") @db.Uuid
+  registeredById         String?      @map("registered_by") @db.Uuid
+  birthCertificateNumber String?      @unique @map("birth_certificate_number") @db.VarChar(100)
+  childName              String       @map("child_name") @db.VarChar(100)
+  dateOfBirth            DateTime     @map("date_of_birth") @db.Timestamptz(6)
+  placeOfBirth           String?      @map("place_of_birth") @db.VarChar(200)
+  hospitalFacility       String?      @map("hospital_facility") @db.VarChar(200)
+  gender                 Gender?
+  weightKg               Decimal?     @map("weight_kg") @db.Decimal(5, 3)
+  heightCm               Decimal?     @map("height_cm") @db.Decimal(5, 2)
+  apgarScore             Int?         @map("apgar_score")
+  deliveryType           DeliveryType? @map("delivery_type")
+  fatherName             String?      @map("father_name") @db.VarChar(100)
+  motherName             String       @map("mother_name") @db.VarChar(100)
+  fatherCitizenship      String?      @map("father_citizenship") @db.VarChar(50)
+  motherCitizenship      String?      @map("mother_citizenship") @db.VarChar(50)
+  district               String?      @db.VarChar(50)
+  province               String?      @db.VarChar(50)
+  attendingDoctor        String?      @map("attending_doctor") @db.VarChar(100)
+  complications          String?
+  isRegistered           Boolean      @default(false) @map("is_registered")
+  registrationDate       DateTime?    @map("registration_date") @db.Date
+  notes                  String?
+  createdAt              DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient      Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  registeredBy User?    @relation("BirthRecordRegisteredBy", fields: [registeredById], references: [id], onDelete: SetNull)
+
+  @@index([dateOfBirth])
+  @@index([district])
+  @@index([isRegistered])
+  @@map("birth_records")
+}
+
+model DeathRecord {
+  id                     String        @id @default(uuid()) @db.Uuid
+  patientId              String?       @unique @map("patient_id") @db.Uuid
+  registeredById         String?       @map("registered_by") @db.Uuid
+  deathCertificateNumber String?       @unique @map("death_certificate_number") @db.VarChar(100)
+  deceasedName           String        @map("deceased_name") @db.VarChar(100)
+  dateOfDeath            DateTime      @map("date_of_death") @db.Timestamptz(6)
+  placeOfDeath           String?       @map("place_of_death") @db.VarChar(200)
+  hospitalFacility       String?       @map("hospital_facility") @db.VarChar(200)
+  primaryCause           String        @map("primary_cause") @db.VarChar(500)
+  secondaryCauses        String[]      @map("secondary_causes")
+  icdCode                String?       @map("icd_code") @db.VarChar(20)
+  mannerOfDeath          MannerOfDeath? @map("manner_of_death")
+  ageAtDeath             Int?          @map("age_at_death")
+  gender                 Gender?
+  district               String?       @db.VarChar(50)
+  province               String?       @db.VarChar(50)
+  attendingDoctor        String?       @map("attending_doctor") @db.VarChar(100)
+  informantName          String?       @map("informant_name") @db.VarChar(100)
+  informantRelationship  String?       @map("informant_relationship") @db.VarChar(50)
+  autopsyPerformed       Boolean       @default(false) @map("autopsy_performed")
+  autopsyFindings        String?       @map("autopsy_findings")
+  isRegistered           Boolean       @default(false) @map("is_registered")
+  registrationDate       DateTime?     @map("registration_date") @db.Date
+  notes                  String?
+  createdAt              DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient      Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  registeredBy User?    @relation("DeathRecordRegisteredBy", fields: [registeredById], references: [id], onDelete: SetNull)
+
+  @@index([dateOfDeath])
+  @@index([district])
+  @@index([mannerOfDeath])
+  @@index([isRegistered])
+  @@map("death_records")
+}
+
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String?  @map("user_id") @db.Uuid
+  action       String   @db.VarChar(100)
+  resourceType String   @map("resource_type") @db.VarChar(100)
+  resourceId   String?  @map("resource_id") @db.Uuid
+  oldValues    Json?    @map("old_values")
+  newValues    Json?    @map("new_values")
+  ipAddress    String?  @map("ip_address") @db.VarChar(45)
+  userAgent    String?  @map("user_agent")
+  sessionId    String?  @map("session_id") @db.VarChar(255)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([resourceType, resourceId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

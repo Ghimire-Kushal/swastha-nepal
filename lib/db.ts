@@ -1,43 +1,58 @@
+import { prisma } from '@/lib/prisma'
 import type { UserRole } from '@/types/auth'
 
 export interface User {
   id: string
   name: string
   email: string
-  phone: string
+  phone: string | null
   passwordHash: string
   role: UserRole
   createdAt: Date
 }
 
-// In-memory store — replace with your database (PostgreSQL, MongoDB, etc.)
-// The globalThis pattern persists across Next.js HMR restarts in development.
-const g = globalThis as unknown as { __users?: Map<string, User>; __nextId?: number }
-const users: Map<string, User> = g.__users ?? (g.__users = new Map())
-let nextId = g.__nextId ?? (g.__nextId = 1)
+const SELECT_USER = {
+  id: true,
+  name: true,
+  email: true,
+  phone: true,
+  passwordHash: true,
+  role: true,
+  createdAt: true,
+} as const
 
 export async function findUserByEmail(email: string): Promise<User | null> {
-  const normalized = email.toLowerCase().trim()
-  for (const user of users.values()) {
-    if (user.email === normalized) return user
-  }
-  return null
+  return prisma.user.findUnique({
+    where: { email: email.toLowerCase().trim() },
+    select: SELECT_USER,
+  }) as Promise<User | null>
 }
 
 export async function findUserById(id: string): Promise<User | null> {
-  return users.get(id) ?? null
+  return prisma.user.findUnique({
+    where: { id },
+    select: SELECT_USER,
+  }) as Promise<User | null>
 }
 
 export async function createUser(
   data: Omit<User, 'id' | 'createdAt'>,
 ): Promise<User> {
-  const id = String(g.__nextId = ++nextId)
-  const user: User = {
-    ...data,
-    email: data.email.toLowerCase().trim(),
-    id,
-    createdAt: new Date(),
-  }
-  users.set(id, user)
-  return user
+  return prisma.user.create({
+    data: {
+      name: data.name,
+      email: data.email.toLowerCase().trim(),
+      phone: data.phone,
+      passwordHash: data.passwordHash,
+      role: data.role,
+    },
+    select: SELECT_USER,
+  }) as Promise<User>
+}
+
+export async function updateLastLogin(id: string): Promise<void> {
+  await prisma.user.update({
+    where: { id },
+    data: { lastLoginAt: new Date() },
+  })
 }
