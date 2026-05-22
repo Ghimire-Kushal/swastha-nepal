@@ -1,16 +1,24 @@
 import type { Config } from 'jest'
-import nextJest from 'next/jest'
+import nextJest from 'next/jest.js'
 
 const createJestConfig = nextJest({ dir: './' })
 
-const config: Config = {
+const baseConfig: Config = {
   coverageProvider: 'v8',
   testEnvironment: 'jsdom',
-  setupFilesAfterFramework: ['<rootDir>/jest.setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
   testMatch: ['**/__tests__/**/*.test.{ts,tsx}'],
 }
 
-export default createJestConfig(config)
+// Wrap createJestConfig so we can override transformIgnorePatterns after
+// next/jest sets its defaults (jose is ESM-only and needs to be transformed)
+export default async () => {
+  const cfg = await createJestConfig(baseConfig)()
+  return {
+    ...cfg,
+    transformIgnorePatterns: ['/node_modules/(?!(jose)/)'],
+  }
+}

@@ -8,10 +8,10 @@ export default async function ChatPage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const [patient, summary] = await Promise.all([
-    getPatientProfile(session.sub),
-    getAIHealthSummary(session.sub),
-  ])
+  const patient = await getPatientProfile(session.sub)
+  if (!patient) redirect('/dashboard/profile')
+
+  const summary = await getAIHealthSummary(session.sub)
 
   return (
     <div className="max-w-3xl mx-auto space-y-4">

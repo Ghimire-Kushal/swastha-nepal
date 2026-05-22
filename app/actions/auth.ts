@@ -6,6 +6,7 @@ import { signToken, setAuthCookie, clearAuthCookie, getSession } from '@/lib/aut
 import { hashPassword, verifyPassword } from '@/lib/password'
 import { findUserByEmail, createUser } from '@/lib/db'
 import { writeAuditLog } from '@/lib/audit'
+import { prisma } from '@/lib/prisma'
 import type { AuthFormState } from '@/types/auth'
 
 export async function login(
@@ -65,6 +66,19 @@ export async function register(
 
   const passwordHash = await hashPassword(password)
   const user = await createUser({ name, email, phone, role, passwordHash })
+
+  // Auto-create role-specific profile records so portals work immediately
+  if (role === 'patient') {
+    await prisma.patient.create({ data: { userId: user.id } })
+  } else if (role === 'doctor') {
+    await prisma.doctor.create({
+      data: {
+        userId: user.id,
+        licenseNumber: `NMC-${user.id.slice(0, 8).toUpperCase()}`,
+        specialization: 'General Practice',
+      },
+    })
+  }
 
   const token = await signToken({
     sub: user.id,

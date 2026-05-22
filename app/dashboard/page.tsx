@@ -23,8 +23,10 @@ export default async function DashboardPage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const [patient, appointments, prescriptions, aiSummary, emergencyInfo] = await Promise.all([
-    getPatientProfile(session.sub),
+  const patient = await getPatientProfile(session.sub)
+  if (!patient) redirect('/dashboard/profile')
+
+  const [appointments, prescriptions, aiSummary, emergencyInfo] = await Promise.all([
     getUpcomingAppointments(session.sub),
     getPrescriptions(session.sub),
     getAIHealthSummary(session.sub),

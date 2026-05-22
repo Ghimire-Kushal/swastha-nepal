@@ -8,8 +8,10 @@ export default async function QRCardPage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const [patient, emergency, allergies] = await Promise.all([
-    getPatientProfile(session.sub),
+  const patient = await getPatientProfile(session.sub)
+  if (!patient) redirect('/dashboard/profile')
+
+  const [emergency, allergies] = await Promise.all([
     getEmergencyInfo(session.sub),
     getAllergies(session.sub),
   ])

@@ -17,10 +17,10 @@ export default async function ProfilePage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const [patient, emergency] = await Promise.all([
-    getPatientProfile(session.sub),
-    getEmergencyInfo(session.sub),
-  ])
+  const patient = await getPatientProfile(session.sub)
+  if (!patient) redirect('/login')
+
+  const emergency = await getEmergencyInfo(session.sub)
 
   const dob = new Date(patient.dateOfBirth)
   const dobFormatted = dob.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })

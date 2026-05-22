@@ -2,8 +2,8 @@ import { defineConfig } from '@prisma/config'
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',
-  // DATABASE_URL is required for migrate/push; optional for prisma generate
-  ...(process.env.DATABASE_URL
-    ? { datasource: { url: process.env.DATABASE_URL } }
-    : {}),
+  datasource: {
+    // DIRECT_URL bypasses pgBouncer for migrations; falls back to DATABASE_URL for local dev
+    url: process.env.DIRECT_URL || process.env.DATABASE_URL,
+  },
 })
