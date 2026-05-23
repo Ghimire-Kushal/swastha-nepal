@@ -3,6 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #0f172a;
+  --accent: #10b981;
+  --accent-hover: #059669;
+  --radius: 0.5rem;
 }
 
 @theme inline {
@@ -10,6 +13,66 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+/* ── Accent colors ─────────────────────────────────────── */
+[data-accent="blue"]    { --accent: #3b82f6; --accent-hover: #2563eb; }
+[data-accent="green"]   { --accent: #10b981; --accent-hover: #059669; }
+[data-accent="red"]     { --accent: #ef4444; --accent-hover: #dc2626; }
+[data-accent="purple"]  { --accent: #a855f7; --accent-hover: #9333ea; }
+[data-accent="dark"]    { --accent: #6366f1; --accent-hover: #4f46e5; }
+[data-accent="orange"]  { --accent: #f97316; --accent-hover: #ea580c; }
+[data-accent="glass"]   { --accent: #22d3ee; --accent-hover: #06b6d4; }
+[data-accent="minimal"] { --accent: #94a3b8; --accent-hover: #64748b; }
+
+/* ── Dark mode ─────────────────────────────────────────── */
+.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  color-scheme: dark;
+}
+.dark body {
+  background: #0f172a;
+  color: #f1f5f9;
+}
+.dark .bg-white      { background-color: #1e293b !important; }
+.dark .bg-slate-50   { background-color: #0f172a !important; }
+.dark .bg-slate-100  { background-color: #1e293b !important; }
+.dark .border-slate-200 { border-color: #334155 !important; }
+.dark .text-slate-900   { color: #f1f5f9 !important; }
+.dark .text-slate-800   { color: #e2e8f0 !important; }
+.dark .text-slate-700   { color: #cbd5e1 !important; }
+.dark .text-slate-600   { color: #94a3b8 !important; }
+.dark .text-slate-500   { color: #64748b !important; }
+
+/* ── Shape ─────────────────────────────────────────────── */
+[data-shape="square"] {
+  --radius: 0;
+}
+[data-shape="square"] button,
+[data-shape="square"] input,
+[data-shape="square"] select,
+[data-shape="square"] textarea,
+[data-shape="square"] .rounded-xl,
+[data-shape="square"] .rounded-lg,
+[data-shape="square"] .rounded-md,
+[data-shape="square"] .rounded-full {
+  border-radius: 0 !important;
+}
+
+/* ── Density ───────────────────────────────────────────── */
+[data-density="compact"] main {
+  font-size: 0.9375rem;
+}
+[data-density="compact"] .p-6 { padding: 1rem !important; }
+[data-density="compact"] .p-5 { padding: 0.875rem !important; }
+[data-density="compact"] .py-4 { padding-top: 0.625rem !important; padding-bottom: 0.625rem !important; }
+[data-density="compact"] .space-y-6 > * + * { margin-top: 1rem !important; }
+
+/* ── Animations ────────────────────────────────────────── */
+[data-animations="off"] * {
+  transition: none !important;
+  animation: none !important;
 }
 
 html {
