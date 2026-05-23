@@ -29,6 +29,6 @@ export const ACCENT_META: Record<AccentColor, { label: string; color: string }> 
   purple:  { label: 'Purple',  color: '#a855f7' },
   dark:    { label: 'Dark',    color: '#6366f1' },
   orange:  { label: 'Orange',  color: '#f97316' },
-  glass:   { label: 'Glass',   color: 'transparent' },
-  minimal: { label: 'Minimal', color: '#64748b' },
+  glass:   { label: 'Glass',   color: '#22d3ee' },
+  minimal: { label: 'Minimal', color: '#94a3b8' },
 }

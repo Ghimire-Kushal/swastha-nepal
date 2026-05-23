@@ -67,18 +67,29 @@ export default function ThemeCustomizer() {
                   className="flex flex-col items-center gap-1.5 group"
                 >
                   <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center transition-all"
                     style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: '50%',
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       background: key === 'glass'
-                        ? 'linear-gradient(135deg, rgba(34,211,238,0.3), rgba(99,102,241,0.3))'
+                        ? 'linear-gradient(135deg, #22d3ee 0%, #6366f1 100%)'
+                        : key === 'minimal'
+                        ? 'linear-gradient(135deg, #94a3b8, #475569)'
                         : meta.color,
-                      outline: theme.accent === key ? '2px solid rgba(255,255,255,0.9)' : '2px solid transparent',
+                      outline: theme.accent === key ? '2.5px solid rgba(255,255,255,0.95)' : '2px solid rgba(255,255,255,0.1)',
                       outlineOffset: '2px',
-                      boxShadow: key === 'glass' ? 'inset 0 0 0 1px rgba(255,255,255,0.2)' : undefined,
+                      boxShadow: theme.accent === key
+                        ? `0 0 12px ${meta.color}66`
+                        : '0 2px 8px rgba(0,0,0,0.3)',
+                      transition: 'all 0.2s',
                     }}
                   >
                     {theme.accent === key && (
-                      <div className="w-2.5 h-2.5 rounded-full bg-white shadow" />
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'white' }} />
                     )}
                   </div>
                   <span className="text-xs text-slate-300 group-hover:text-white transition-colors">
@@ -188,14 +199,29 @@ export default function ThemeCustomizer() {
               <p className="text-sm font-semibold text-white">Animations</p>
               <button
                 onClick={() => setTheme({ animations: !theme.animations })}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  theme.animations ? 'bg-cyan-400' : 'bg-slate-600'
-                }`}
+                style={{
+                  position: 'relative',
+                  width: 48,
+                  height: 24,
+                  borderRadius: 9999,
+                  flexShrink: 0,
+                  background: theme.animations ? '#22d3ee' : '#475569',
+                  transition: 'background 0.2s',
+                }}
               >
                 <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                    theme.animations ? 'translate-x-6' : 'translate-x-0'
-                  }`}
+                  style={{
+                    position: 'absolute',
+                    top: 2,
+                    left: 2,
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    background: 'white',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+                    transform: theme.animations ? 'translateX(24px)' : 'translateX(0)',
+                    transition: 'transform 0.2s',
+                  }}
                 />
               </button>
             </div>
