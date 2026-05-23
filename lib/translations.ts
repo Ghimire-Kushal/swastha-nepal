@@ -140,7 +140,7 @@ export const translations: Record<'en' | 'np', Translations> = {
     },
     footer: {
       tagline: 'AI-powered healthcare for every Nepali',
-      copyright: '© 2025 Swastha Nepal. All rights reserved.',
+      copyright: '© 2026 Swastha Nepal. All rights reserved.',
       links: [
         { label: 'Home', href: '#' },
         { label: 'Features', href: '#features' },
@@ -265,7 +265,7 @@ export const translations: Record<'en' | 'np', Translations> = {
     },
     footer: {
       tagline: 'हरेक नेपालीका लागि AI-संचालित स्वास्थ्य सेवा',
-      copyright: '© २०२५ स्वस्थ नेपाल AI। सर्वाधिकार सुरक्षित।',
+      copyright: '© २०२६ स्वस्थ नेपाल। सर्वाधिकार सुरक्षित।',
       links: [
         { label: 'गृहपृष्ठ', href: '#' },
         { label: 'विशेषताहरू', href: '#features' },
