@@ -8,14 +8,14 @@ export default async function PharmacyOverviewPage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const [pharmacist, stats] = await Promise.all([
-    getPharmacistProfile(session.sub),
-    getPharmacyStats(session.sub),
-  ])
+  const pharmacist = await getPharmacistProfile(session.sub)
+  if (!pharmacist) redirect('/login')
+
+  const stats = await getPharmacyStats(session.sub)
 
   const statCards = [
     { label: 'Pending Verification', value: stats.pending, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Verified (Ready)', value: stats.verified, icon: CheckCircle, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Expired', value: stats.expired, icon: CheckCircle, color: 'text-blue-600', bg: 'bg-blue-50' },
     { label: 'Dispensed Today', value: stats.dispensedToday, icon: PackageCheck, color: 'text-teal-600', bg: 'bg-teal-50' },
     { label: 'Total Dispensed', value: stats.totalDispensed, icon: Pill, color: 'text-emerald-600', bg: 'bg-emerald-50' },
   ]

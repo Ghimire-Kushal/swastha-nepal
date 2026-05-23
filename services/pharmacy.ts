@@ -5,7 +5,7 @@ export async function getPharmacistProfile(userId: string) {
     where: { id: userId },
     select: { id: true, name: true, email: true, phone: true },
   })
-  if (!user) throw new Error('Pharmacist not found')
+  if (!user) return null
   return {
     id: user.id,
     userId: user.id,
@@ -22,16 +22,16 @@ export async function getPharmacyStats(_userId: string) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  const [pending, verified, dispensedToday, totalDispensed] = await Promise.all([
-    prisma.prescription.count({ where: { status: 'active' } }),
+  const [pending, dispensedToday, totalDispensed, expired] = await Promise.all([
     prisma.prescription.count({ where: { status: 'active' } }),
     prisma.prescription.count({
       where: { status: 'dispensed', dispensedAt: { gte: today } },
     }),
     prisma.prescription.count({ where: { status: 'dispensed' } }),
+    prisma.prescription.count({ where: { status: 'expired' } }),
   ])
 
-  return { pending, verified, dispensedToday, totalDispensed }
+  return { pending, dispensedToday, totalDispensed, expired }
 }
 
 export async function getAllPrescriptions(_userId: string) {

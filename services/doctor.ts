@@ -11,7 +11,7 @@ export async function getDoctorProfile(userId: string) {
     where: { userId },
     include: { user: { select: { name: true, email: true } } },
   })
-  if (!result) throw new Error('Doctor profile not found')
+  if (!result) return null
   return {
     id: result.id,
     userId: result.userId,
@@ -145,7 +145,7 @@ export async function getPatientForDoctor(_userId: string, patientId: string) {
       emergencyInfo: { select: { criticalConditions: true, currentMedications: true } },
     },
   })
-  if (!result) throw new Error('Patient not found')
+  if (!result) return null
 
   return {
     id: result.id,

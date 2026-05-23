@@ -119,35 +119,6 @@ export default function HeroSection({ t }: HeroSectionProps) {
           ))}
         </motion.div>
 
-        {/* Floating cards */}
-        <div className="hidden lg:block">
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1, duration: 0.8 }}
-            className="absolute left-8 top-1/2 -translate-y-1/2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 text-left w-48"
-          >
-            <div className="text-2xl font-black text-emerald-400">98%</div>
-            <div className="text-slate-400 text-xs mt-1">Diagnostic Accuracy</div>
-            <div className="mt-2 h-1 bg-slate-700 rounded-full overflow-hidden">
-              <div className="h-full w-[98%] bg-emerald-500 rounded-full" />
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1.2, duration: 0.8 }}
-            className="absolute right-8 top-1/2 -translate-y-1/2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 text-left w-48"
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-slate-400 text-xs">Live Consultations</span>
-            </div>
-            <div className="text-2xl font-black text-white">50K+</div>
-            <div className="text-slate-400 text-xs">Daily across Nepal</div>
-          </motion.div>
-        </div>
       </div>
 
       {/* Bottom gradient fade */}

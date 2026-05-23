@@ -5,7 +5,7 @@ export async function getLabTechProfile(userId: string) {
     where: { id: userId },
     select: { id: true, name: true, email: true, phone: true },
   })
-  if (!user) throw new Error('Lab technician not found')
+  if (!user) return null
   return {
     id: user.id,
     userId: user.id,
