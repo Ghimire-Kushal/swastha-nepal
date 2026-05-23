@@ -1,4 +1,4 @@
-// Audit logging — in-memory for dev, replace with Prisma insert in production
+import { prisma } from '@/lib/prisma'
 
 export type AuditAction =
   | 'auth.login'
@@ -30,23 +30,38 @@ export interface AuditEntry {
   success: boolean
 }
 
-// In-memory ring buffer — last 500 entries
+// In-memory ring buffer for getAuditLogs() reads (admin dashboard)
 const MAX_ENTRIES = 500
 const store: AuditEntry[] = []
 let _seq = 0
 
-export function writeAuditLog(
-  entry: Omit<AuditEntry, 'id' | 'timestamp'>
-): void {
+export function writeAuditLog(entry: Omit<AuditEntry, 'id' | 'timestamp'>): void {
   _seq++
   const record: AuditEntry = {
     ...entry,
     id: `audit-${_seq}`,
     timestamp: new Date().toISOString(),
   }
+
   store.push(record)
   if (store.length > MAX_ENTRIES) store.shift()
-  // TODO: prisma.auditLog.create({ data: record })
+
+  // Persist to DB — fire and forget (don't await, non-blocking)
+  const userId = entry.userId === 'unknown' ? undefined : entry.userId
+  prisma.auditLog
+    .create({
+      data: {
+        userId: userId ?? null,
+        action: entry.action,
+        resourceType: entry.action.split('.')[0],
+        resourceId: entry.resourceId ?? null,
+        newValues: entry.details ? { details: entry.details, success: entry.success } : undefined,
+        ipAddress: entry.ipAddress ?? null,
+      },
+    })
+    .catch(() => {
+      // Audit failure must never crash the request
+    })
 }
 
 export function getAuditLogs(limit = 100): AuditEntry[] {

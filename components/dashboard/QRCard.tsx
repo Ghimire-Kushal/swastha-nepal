@@ -51,7 +51,7 @@ export default function QRCard({ data }: { data: CardData }) {
               <Heart className="w-4 h-4 text-white" fill="white" />
             </div>
             <div>
-              <div className="text-white font-bold text-sm">Swastha Nepal AI</div>
+              <div className="text-white font-bold text-sm">Swastha Nepal</div>
               <div className="text-emerald-200 text-xs">Emergency Health Card</div>
             </div>
           </div>

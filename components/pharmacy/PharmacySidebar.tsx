@@ -31,7 +31,7 @@ export default function PharmacySidebar({ pharmacistName }: { pharmacistName: st
             <Pill className="w-4 h-4 text-white" />
           </div>
           <div>
-            <div className="font-bold text-slate-900 text-sm leading-tight">Swastha Nepal AI</div>
+            <div className="font-bold text-slate-900 text-sm leading-tight">Swastha Nepal</div>
             <div className="text-xs text-teal-600 font-medium">Pharmacy Portal</div>
           </div>
         </Link>

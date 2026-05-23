@@ -34,7 +34,7 @@ export default function BirthRecordPage() {
         <div className="bg-white rounded-2xl border-2 border-blue-200 overflow-hidden shadow-sm" id="birth-cert">
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 text-center">
             <div className="text-white font-bold text-lg">Government of Nepal</div>
-            <div className="text-blue-200 text-sm">Swastha Nepal AI — Digital Records System</div>
+            <div className="text-blue-200 text-sm">Swastha Nepal — Digital Records System</div>
             <div className="text-white font-black text-2xl mt-2">BIRTH CERTIFICATE</div>
           </div>
 
@@ -73,7 +73,7 @@ export default function BirthRecordPage() {
             <div className="border-t border-dashed border-slate-200 pt-4 flex justify-between items-end">
               <div className="text-xs text-slate-400">
                 This certificate is issued under the authority of<br />
-                Swastha Nepal AI Health Information System
+                Swastha Nepal Health Information System
               </div>
               <div className="text-right">
                 <div className="border-t-2 border-slate-400 pt-1 text-xs text-slate-600 font-medium w-32">

@@ -48,7 +48,7 @@ export default function AdminSidebar({ adminName, role }: { adminName: string; r
             <ShieldCheck className="w-4 h-4 text-white" />
           </div>
           <div>
-            <div className="font-bold text-white text-sm leading-tight">Swastha Nepal AI</div>
+            <div className="font-bold text-white text-sm leading-tight">Swastha Nepal</div>
             <div className="text-xs text-indigo-400 font-medium">Admin Portal</div>
           </div>
         </Link>

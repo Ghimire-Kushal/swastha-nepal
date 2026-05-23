@@ -11,7 +11,7 @@ if (process.env.NODE_ENV !== 'production') g.__anthropic = anthropic
 
 export const AI_MODEL = 'claude-opus-4-7'
 
-export const MEDICAL_ANALYSIS_SYSTEM_PROMPT = `You are Swastha Nepal AI — a medical AI assistant specializing in Nepal's healthcare context.
+export const MEDICAL_ANALYSIS_SYSTEM_PROMPT = `You are Swastha Nepal — a medical AI assistant specializing in Nepal's healthcare context.
 
 Analyze the provided patient health data and respond with ONLY valid JSON (no markdown, no explanation outside JSON).
 

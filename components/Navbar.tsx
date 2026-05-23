@@ -32,7 +32,6 @@ export default function Navbar({ lang, setLang, t }: NavbarProps) {
             </div>
             <span className="font-bold text-slate-900 text-lg leading-tight">
               {lang === 'np' ? 'स्वस्थ नेपाल' : 'Swastha Nepal'}
-              <span className="text-emerald-600 ml-1">AI</span>
             </span>
           </div>
 

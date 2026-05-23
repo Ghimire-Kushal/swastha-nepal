@@ -13,6 +13,7 @@ export default async function PharmacyLayout({
   if (session.role !== 'pharmacist') redirect('/dashboard')
 
   const pharmacist = await getPharmacistProfile(session.sub)
+  if (!pharmacist) redirect('/login')
 
   return (
     <div className="flex min-h-screen bg-slate-50">

@@ -9,6 +9,7 @@ export default async function DoctorLayout({ children }: { children: React.React
   if (session.role !== 'doctor') redirect('/dashboard')
 
   const doctor = await getDoctorProfile(session.sub)
+  if (!doctor) redirect('/login')
 
   return (
     <div className="flex min-h-screen bg-slate-50">

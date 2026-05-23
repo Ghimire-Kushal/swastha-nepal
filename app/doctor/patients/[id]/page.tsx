@@ -37,6 +37,7 @@ export default async function PatientDetailPage({
 
   const { id } = await params
   const patient = await getPatientForDoctor(session.sub, id)
+  if (!patient) redirect('/doctor/patients')
 
   const age =
     new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()

@@ -21,7 +21,6 @@ export default function Footer({ t, lang }: FooterProps) {
               </div>
               <span className="font-bold text-white text-lg">
                 {lang === 'np' ? 'स्वस्थ नेपाल' : 'Swastha Nepal'}
-                <span className="text-emerald-400 ml-1">AI</span>
               </span>
             </div>
             <p className="text-sm leading-relaxed text-slate-500">{t.tagline}</p>

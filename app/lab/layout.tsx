@@ -9,6 +9,7 @@ export default async function LabLayout({ children }: { children: React.ReactNod
   if (session.role !== 'lab_technician') redirect('/dashboard')
 
   const tech = await getLabTechProfile(session.sub)
+  if (!tech) redirect('/login')
 
   return (
     <div className="flex min-h-screen bg-slate-50">

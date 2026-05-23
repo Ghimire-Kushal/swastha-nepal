@@ -1,10 +1,15 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useState, useEffect } from 'react'
 import { uploadLabReport, type LabActionState } from '@/app/actions/lab'
 import { Plus, Trash2, CheckCircle, AlertTriangle } from 'lucide-react'
-import { MOCK_PENDING_ORDERS } from '@/lib/mock-lab-data'
 import FileUpload, { type UploadedFile } from '@/components/FileUpload'
+
+interface PatientOption {
+  id: string
+  name: string
+  citizenshipNumber: string
+}
 
 interface ResultRow {
   id: number
@@ -32,6 +37,14 @@ export default function LabUploadPage() {
     { id: _nextId++, parameter: '', value: '', unit: '', referenceRange: '', isAbnormal: false },
   ])
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null)
+  const [patients, setPatients] = useState<PatientOption[]>([])
+
+  useEffect(() => {
+    fetch('/api/patients/list')
+      .then((r) => r.json())
+      .then((data) => setPatients(data.patients ?? []))
+      .catch(() => {})
+  }, [])
 
   function addRow() {
     setRows((prev) => [
@@ -87,9 +100,9 @@ export default function LabUploadPage() {
                 className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
                 <option value="">Select patient…</option>
-                {MOCK_PENDING_ORDERS.map((o) => (
-                  <option key={o.patientId} value={o.patientId}>
-                    {o.patientName}
+                {patients.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}{p.citizenshipNumber ? ` — ${p.citizenshipNumber}` : ''}
                   </option>
                 ))}
               </select>
@@ -105,11 +118,6 @@ export default function LabUploadPage() {
                 className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
                 <option value="">None</option>
-                {MOCK_PENDING_ORDERS.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.patientName} — {o.tests[0]}{o.tests.length > 1 ? ` +${o.tests.length - 1}` : ''}
-                  </option>
-                ))}
               </select>
             </div>
           </div>

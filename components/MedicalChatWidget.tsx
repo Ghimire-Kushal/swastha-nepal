@@ -21,7 +21,7 @@ export default function MedicalChatWidget({ patientName, conditions, medications
     {
       id: 'welcome',
       role: 'assistant',
-      content: `Namaste ${patientName}! I'm your Swastha Nepal AI health assistant. I can answer general health questions, explain symptoms, or help you understand medical information in the context of Nepal's healthcare system.\n\nPlease remember: I provide general health information only — always consult a qualified doctor for diagnosis and treatment.`,
+      content: `Namaste ${patientName}! I'm your Swastha Nepal health assistant. I can answer general health questions, explain symptoms, or help you understand medical information in the context of Nepal's healthcare system.\n\nPlease remember: I provide general health information only — always consult a qualified doctor for diagnosis and treatment.`,
       timestamp: new Date(),
     },
   ])
@@ -128,7 +128,7 @@ export default function MedicalChatWidget({ patientName, conditions, medications
             <Brain className="w-5 h-5 text-white" />
           </div>
           <div>
-            <div className="font-bold text-white text-sm">Swastha Nepal AI Chat</div>
+            <div className="font-bold text-white text-sm">Swastha Nepal Chat</div>
             <div className="text-blue-100 text-xs">Medical health assistant · Nepal context</div>
           </div>
         </div>

@@ -140,7 +140,7 @@ export const translations: Record<'en' | 'np', Translations> = {
     },
     footer: {
       tagline: 'AI-powered healthcare for every Nepali',
-      copyright: '© 2025 Swastha Nepal AI. All rights reserved.',
+      copyright: '© 2025 Swastha Nepal. All rights reserved.',
       links: [
         { label: 'Home', href: '#' },
         { label: 'Features', href: '#features' },
@@ -149,8 +149,8 @@ export const translations: Record<'en' | 'np', Translations> = {
         { label: 'Terms of Service', href: '#' },
       ],
       contact: {
-        email: 'hello@swasthanepal.ai',
-        phone: '+977-01-4XXXXXX',
+        email: 'kushal.upr@gmail.com',
+        phone: '+977-9749231395',
       },
     },
   },
@@ -274,8 +274,8 @@ export const translations: Record<'en' | 'np', Translations> = {
         { label: 'सेवा सर्तहरू', href: '#' },
       ],
       contact: {
-        email: 'hello@swasthanepal.ai',
-        phone: '+९७७-०१-४XXXXXX',
+        email: 'kushal.upr@gmail.com',
+        phone: '+९७७-९७४९२३१३९५',
       },
     },
   },

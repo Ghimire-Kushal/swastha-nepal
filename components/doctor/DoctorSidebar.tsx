@@ -48,7 +48,7 @@ export default function DoctorSidebar({ doctorName }: { doctorName: string }) {
             <Stethoscope className="w-4 h-4 text-white" />
           </div>
           <div>
-            <div className="font-bold text-slate-900 text-sm leading-tight">Swastha Nepal AI</div>
+            <div className="font-bold text-slate-900 text-sm leading-tight">Swastha Nepal</div>
             <div className="text-xs text-blue-600 font-medium">Doctor Portal</div>
           </div>
         </Link>

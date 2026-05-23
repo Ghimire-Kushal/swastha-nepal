@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Swastha Nepal AI — Your AI-Powered Health Companion',
+  title: 'Swastha Nepal — Your AI-Powered Health Companion',
   description:
     'Access intelligent health guidance, emergency services, and digital medical records — built for Nepal.',
 }

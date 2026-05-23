@@ -1,11 +1,20 @@
-import { MOCK_EMERGENCY_INFO, MOCK_ALLERGIES, MOCK_PATIENT, BLOOD_TYPE_DISPLAY } from '@/lib/mock-data'
+import { prisma } from '@/lib/prisma'
+import { BLOOD_TYPE_DISPLAY } from '@/lib/mock-data'
 import { AlertTriangle, Heart, Phone, Pill, Activity, Clock } from 'lucide-react'
+import { notFound } from 'next/navigation'
 
 const SEVERITY_COLOR: Record<string, string> = {
   life_threatening: 'bg-red-100 text-red-800 border-red-300',
   severe: 'bg-orange-100 text-orange-800 border-orange-200',
   moderate: 'bg-amber-100 text-amber-800 border-amber-200',
   mild: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+}
+
+type EmergencyContact = {
+  name: string
+  relationship: string
+  phone: string
+  isPrimary: boolean
 }
 
 export default async function EmergencyPage({
@@ -15,27 +24,28 @@ export default async function EmergencyPage({
 }) {
   const { hash } = await params
 
-  // TODO: look up real patient by hash from DB
-  if (hash !== MOCK_EMERGENCY_INFO.qrHash) {
-    return (
-      <div className="min-h-screen bg-red-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl border-2 border-red-200 p-8 max-w-sm text-center shadow-lg">
-          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-          <h1 className="text-xl font-bold text-slate-900">Record Not Found</h1>
-          <p className="text-slate-500 text-sm mt-2">
-            This QR code is invalid or has expired. Contact the patient directly.
-          </p>
-        </div>
-      </div>
-    )
-  }
+  const info = await prisma.emergencyInfo.findUnique({
+    where: { qrHash: hash },
+    include: {
+      patient: {
+        include: {
+          user: { select: { name: true } },
+          allergies: { where: { isActive: true }, orderBy: { severity: 'asc' } },
+        },
+      },
+    },
+  })
 
-  const info = MOCK_EMERGENCY_INFO
-  const allergies = MOCK_ALLERGIES
-  const patient = MOCK_PATIENT
-  const bloodDisplay = BLOOD_TYPE_DISPLAY[info.bloodType] ?? info.bloodType
-  const age = new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()
-  const primaryContact = info.emergencyContacts.find((c) => c.isPrimary) ?? info.emergencyContacts[0]
+  if (!info) notFound()
+
+  const patient = info.patient
+  const bloodDisplay = BLOOD_TYPE_DISPLAY[(info.bloodType ?? patient.bloodType) as string] ?? (info.bloodType ?? patient.bloodType ?? 'Unknown')
+  const age = patient.dateOfBirth
+    ? Math.floor((Date.now() - patient.dateOfBirth.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    : null
+
+  const contacts = (info.emergencyContacts as unknown as EmergencyContact[]) ?? []
+  const primaryContact = contacts.find((c) => c.isPrimary) ?? contacts[0]
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-600 to-red-700 flex items-start justify-center p-4 py-8">
@@ -44,7 +54,7 @@ export default async function EmergencyPage({
         <div className="text-center text-white">
           <div className="flex items-center justify-center gap-2 mb-1">
             <Heart className="w-5 h-5" fill="white" />
-            <span className="font-bold text-lg">Swastha Nepal AI</span>
+            <span className="font-bold text-lg">Swastha Nepal</span>
           </div>
           <p className="text-red-200 text-sm">Emergency Health Record — Read Only</p>
         </div>
@@ -53,9 +63,11 @@ export default async function EmergencyPage({
         <div className="bg-white rounded-2xl overflow-hidden shadow-xl">
           <div className="bg-slate-900 px-5 py-4 flex items-center justify-between">
             <div>
-              <h1 className="text-white font-bold text-xl">{patient.name}</h1>
+              <h1 className="text-white font-bold text-xl">{patient.user.name}</h1>
               <p className="text-slate-400 text-sm">
-                {patient.gender === 'male' ? 'Male' : 'Female'} · {age} yrs · {patient.district}
+                {patient.gender ? (patient.gender === 'male' ? 'Male' : patient.gender === 'female' ? 'Female' : 'Other') : '—'}
+                {age ? ` · ${age} yrs` : ''}
+                {patient.district ? ` · ${patient.district}` : ''}
               </p>
             </div>
             <div className="text-right">
@@ -65,16 +77,16 @@ export default async function EmergencyPage({
           </div>
 
           <div className="p-5 space-y-4">
-            {/* Allergies — most critical */}
-            {allergies.length > 0 && (
+            {/* Allergies */}
+            {patient.allergies.length > 0 && (
               <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4">
                 <div className="flex items-center gap-2 text-red-700 font-bold text-sm mb-3">
                   <AlertTriangle className="w-4 h-4" />
                   ALLERGIES — CRITICAL
                 </div>
                 <div className="space-y-2">
-                  {allergies.map((a, i) => (
-                    <div key={i} className="flex items-start justify-between gap-2">
+                  {patient.allergies.map((a) => (
+                    <div key={a.id} className="flex items-start justify-between gap-2">
                       <div>
                         <div className="font-bold text-slate-900 text-sm">{a.allergenName}</div>
                         <div className="text-xs text-slate-600">{a.reaction}</div>
@@ -88,7 +100,7 @@ export default async function EmergencyPage({
               </div>
             )}
 
-            {/* Critical conditions */}
+            {/* Chronic conditions */}
             {info.criticalConditions.length > 0 && (
               <div>
                 <div className="flex items-center gap-2 text-slate-700 font-semibold text-xs uppercase tracking-wide mb-2">
@@ -125,29 +137,28 @@ export default async function EmergencyPage({
             )}
 
             {/* Emergency contacts */}
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-              <div className="flex items-center gap-2 text-emerald-700 font-semibold text-xs uppercase tracking-wide mb-3">
-                <Phone className="w-3.5 h-3.5" />
-                Emergency Contacts
-              </div>
-              {info.emergencyContacts.map((c, i) => (
-                <div key={i} className="flex items-center justify-between py-1">
-                  <div>
-                    <span className="font-semibold text-slate-900 text-sm">{c.name}</span>
-                    <span className="text-xs text-slate-500 ml-1">({c.relationship})</span>
-                    {c.isPrimary && (
-                      <span className="ml-1 text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-medium">Primary</span>
-                    )}
-                  </div>
-                  <a
-                    href={`tel:${c.phone}`}
-                    className="font-mono text-sm font-bold text-emerald-700 hover:underline"
-                  >
-                    {c.phone}
-                  </a>
+            {contacts.length > 0 && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+                <div className="flex items-center gap-2 text-emerald-700 font-semibold text-xs uppercase tracking-wide mb-3">
+                  <Phone className="w-3.5 h-3.5" />
+                  Emergency Contacts
                 </div>
-              ))}
-            </div>
+                {contacts.map((c, i) => (
+                  <div key={i} className="flex items-center justify-between py-1">
+                    <div>
+                      <span className="font-semibold text-slate-900 text-sm">{c.name}</span>
+                      <span className="text-xs text-slate-500 ml-1">({c.relationship})</span>
+                      {c.isPrimary && (
+                        <span className="ml-1 text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-medium">Primary</span>
+                      )}
+                    </div>
+                    <a href={`tel:${c.phone}`} className="font-mono text-sm font-bold text-emerald-700 hover:underline">
+                      {c.phone}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Insurance */}
             {info.insuranceProvider && (
@@ -163,7 +174,7 @@ export default async function EmergencyPage({
         </div>
 
         <p className="text-center text-red-200 text-xs pb-4">
-          This page is publicly accessible via QR scan · Swastha Nepal AI
+          This page is publicly accessible via QR scan · Swastha Nepal
           {primaryContact && ` · Primary contact: ${primaryContact.phone}`}
         </p>
       </div>

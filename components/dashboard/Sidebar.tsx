@@ -55,7 +55,7 @@ export default function Sidebar() {
             <Heart className="w-4 h-4 text-white" fill="white" />
           </div>
           <span className="font-bold text-slate-900 text-sm">
-            Swastha Nepal <span className="text-emerald-600">AI</span>
+            Swastha Nepal
           </span>
         </Link>
         <div className="flex items-center gap-1">
@@ -129,7 +129,7 @@ export default function Sidebar() {
             <Heart className="w-3.5 h-3.5 text-white" fill="white" />
           </div>
           <span className="font-bold text-slate-900 text-sm">
-            Swastha Nepal <span className="text-emerald-600">AI</span>
+            Swastha Nepal
           </span>
         </Link>
       </div>

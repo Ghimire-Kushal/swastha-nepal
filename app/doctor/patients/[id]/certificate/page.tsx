@@ -46,7 +46,7 @@ export default function CertificatePage() {
             <div className="text-center border-b-2 border-slate-200 pb-4 mb-6">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Award className="w-6 h-6 text-blue-600" />
-                <span className="text-xl font-black text-slate-900">Swastha Nepal AI</span>
+                <span className="text-xl font-black text-slate-900">Swastha Nepal</span>
               </div>
               <div className="text-slate-500 text-sm">Grande International Hospital, Kathmandu, Nepal</div>
               <div className="text-slate-400 text-xs mt-0.5">License No: NMC-2019-003421</div>

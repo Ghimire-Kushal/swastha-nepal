@@ -17,6 +17,7 @@ export default async function DoctorPatientAIPage({
 
   const { id } = await params
   const patient = await getPatientForDoctor(session.sub, id)
+  if (!patient) redirect('/doctor/patients')
 
   const age = new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()
 

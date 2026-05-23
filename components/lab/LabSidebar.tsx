@@ -33,7 +33,7 @@ export default function LabSidebar({ techName }: { techName: string }) {
             <FlaskConical className="w-4 h-4 text-white" />
           </div>
           <div>
-            <div className="font-bold text-slate-900 text-sm leading-tight">Swastha Nepal AI</div>
+            <div className="font-bold text-slate-900 text-sm leading-tight">Swastha Nepal</div>
             <div className="text-xs text-purple-600 font-medium">Lab Portal</div>
           </div>
         </Link>

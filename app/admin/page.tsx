@@ -54,7 +54,7 @@ export default async function AdminOverviewPage() {
           National Health Analytics
         </h1>
         <p className="text-slate-500 text-sm mt-0.5">
-          Swastha Nepal AI — Real-time health data overview
+          Swastha Nepal — Real-time health data overview
         </p>
       </div>
 

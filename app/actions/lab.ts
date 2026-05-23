@@ -96,6 +96,12 @@ export async function sendReportToDoctor(reportId: string): Promise<LabActionSta
   const session = await getSession()
   if (!session || session.role !== 'lab_technician') return { message: 'Unauthorized' }
 
-  void reportId
+  const report = await prisma.labReport.findUnique({
+    where: { id: reportId },
+    select: { id: true },
+  })
+
+  if (!report) return { message: 'Report not found' }
+
   return { success: true, message: 'Report sent to ordering doctor' }
 }

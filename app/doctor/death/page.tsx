@@ -33,7 +33,7 @@ export default function DeathRecordPage() {
         <div className="bg-white rounded-2xl border-2 border-slate-300 overflow-hidden shadow-sm" id="death-cert">
           <div className="bg-slate-800 px-6 py-5 text-center">
             <div className="text-white font-bold text-lg">Government of Nepal</div>
-            <div className="text-slate-400 text-sm">Swastha Nepal AI — Digital Records System</div>
+            <div className="text-slate-400 text-sm">Swastha Nepal — Digital Records System</div>
             <div className="text-white font-black text-2xl mt-2">DEATH CERTIFICATE</div>
           </div>
 
@@ -71,7 +71,7 @@ export default function DeathRecordPage() {
 
             <div className="border-t border-dashed border-slate-200 pt-4 flex justify-between items-end">
               <div className="text-xs text-slate-400">
-                Certified by Swastha Nepal AI Health Information System<br />
+                Certified by Swastha Nepal Health Information System<br />
                 This document has legal validity under Nepal Health Act 2075
               </div>
               <div className="text-right">

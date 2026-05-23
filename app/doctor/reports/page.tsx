@@ -1,9 +1,8 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useState, useEffect } from 'react'
 import { uploadMedicalDocument, type DoctorActionState } from '@/app/actions/doctor'
 import { CheckCircle, FileText } from 'lucide-react'
-import { MOCK_DOCTOR_PATIENTS } from '@/lib/mock-doctor-data'
 import FileUpload, { type UploadedFile } from '@/components/FileUpload'
 
 const REPORT_TYPES = [
@@ -15,12 +14,26 @@ const REPORT_TYPES = [
   { value: 'other', label: 'Other' },
 ]
 
+interface PatientOption {
+  id: string
+  name: string
+  citizenshipNumber: string
+}
+
 export default function DoctorUploadReportPage() {
   const [state, action, pending] = useActionState<DoctorActionState, FormData>(
     uploadMedicalDocument,
     undefined
   )
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null)
+  const [patients, setPatients] = useState<PatientOption[]>([])
+
+  useEffect(() => {
+    fetch('/api/patients/list')
+      .then((r) => r.json())
+      .then((data) => setPatients(data.patients ?? []))
+      .catch(() => {})
+  }, [])
 
   function err(field: string) {
     return state?.errors?.[field]?.[0]
@@ -43,7 +56,6 @@ export default function DoctorUploadReportPage() {
       )}
 
       <form action={action} className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
-        {/* Hidden field — Cloudinary URL set after upload */}
         <input type="hidden" name="fileUrl" value={uploadedFile?.url ?? ''} />
         <input type="hidden" name="filePublicId" value={uploadedFile?.publicId ?? ''} />
 
@@ -58,9 +70,9 @@ export default function DoctorUploadReportPage() {
             className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Select patient…</option>
-            {MOCK_DOCTOR_PATIENTS.map((p) => (
+            {patients.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name} — {p.citizenshipNumber}
+                {p.name}{p.citizenshipNumber ? ` — ${p.citizenshipNumber}` : ''}
               </option>
             ))}
           </select>
@@ -98,7 +110,7 @@ export default function DoctorUploadReportPage() {
           />
         </div>
 
-        {/* Cloudinary file upload */}
+        {/* File upload */}
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
             File <span className="text-red-500">*</span>
@@ -111,9 +123,6 @@ export default function DoctorUploadReportPage() {
             label="Upload scan or report file"
             onUpload={setUploadedFile}
           />
-          {!uploadedFile && state?.message && (
-            <p className="text-xs text-amber-600 mt-1">Upload a file before submitting</p>
-          )}
         </div>
 
         {/* Notes */}

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Shield, Eye, EyeOff, Lock, CheckCircle } from 'lucide-react'
+import { Shield, Eye, EyeOff, Lock, CheckCircle, AlertCircle } from 'lucide-react'
+import { savePrivacySettings } from '@/app/actions/privacy'
 
 interface PrivacySetting {
   id: string
@@ -86,16 +87,27 @@ const CATEGORY_META = {
 export default function PrivacyPage() {
   const [settings, setSettings] = useState<PrivacySetting[]>(DEFAULT_SETTINGS)
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   function toggle(id: string) {
     setSettings((prev) => prev.map((s) => s.id === id ? { ...s, enabled: !s.enabled } : s))
     setSaved(false)
+    setError(null)
   }
 
-  function save() {
-    // TODO: persist via server action to database
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+  async function save() {
+    setSaving(true)
+    setError(null)
+    const map = Object.fromEntries(settings.map((s) => [s.id, s.enabled]))
+    const result = await savePrivacySettings(map)
+    setSaving(false)
+    if (result.success) {
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } else {
+      setError(result.error ?? 'Failed to save')
+    }
   }
 
   const grouped = (['sharing', 'emergency', 'access'] as const).map((cat) => ({
@@ -120,6 +132,12 @@ export default function PrivacyPage() {
         <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-2.5 rounded-lg text-sm font-medium">
           <CheckCircle className="w-4 h-4" />
           Privacy settings saved successfully
+        </div>
+      )}
+      {error && (
+        <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-lg text-sm font-medium">
+          <AlertCircle className="w-4 h-4" />
+          {error}
         </div>
       )}
 
@@ -166,14 +184,15 @@ export default function PrivacyPage() {
       <div className="flex justify-end">
         <button
           onClick={save}
-          className="px-6 py-2.5 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors"
+          disabled={saving}
+          className="px-6 py-2.5 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-60"
         >
-          Save Settings
+          {saving ? 'Saving…' : 'Save Settings'}
         </button>
       </div>
 
       <p className="text-xs text-slate-400 text-center">
-        Your data is encrypted at rest and in transit · Swastha Nepal AI complies with Nepal health data regulations
+        Your data is encrypted at rest and in transit · Swastha Nepal complies with Nepal health data regulations
       </p>
     </div>
   )

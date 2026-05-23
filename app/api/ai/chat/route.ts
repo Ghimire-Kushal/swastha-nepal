@@ -45,7 +45,7 @@ async function getPatientContext(userId: string): Promise<string> {
   }
 }
 
-const CHAT_SYSTEM = (context: string) => `You are Swastha Nepal AI — a medical assistant specializing in Nepal's healthcare context.
+const CHAT_SYSTEM = (context: string) => `You are Swastha Nepal — a medical assistant specializing in Nepal's healthcare context.
 ${context ? `\nCurrent patient context:\n${context}\n` : ''}
 Guidelines:
 - Answer health questions clearly and simply, in the patient's language level
@@ -61,7 +61,7 @@ Respond conversationally, not as a list unless listing is the clearest format.`
 const MOCK_RESPONSES: Array<{ keywords: string[]; response: string }> = [
   {
     keywords: ['hello', 'hi', 'namaste', 'hey'],
-    response: "Namaste! I'm Swastha Nepal AI, your health assistant. I can answer general health questions, explain symptoms, help you understand your lab results, or discuss Nepal-specific health topics. How can I help you today?",
+    response: "Namaste! I'm Swastha Nepal, your health assistant. I can answer general health questions, explain symptoms, help you understand your lab results, or discuss Nepal-specific health topics. How can I help you today?",
   },
   {
     keywords: ['vitamin d', 'vitamin d deficiency', 'sunshine'],
