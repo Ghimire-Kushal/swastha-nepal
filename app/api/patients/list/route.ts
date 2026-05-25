@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-//endpoint to list all patients, only accessible by doctors, lab technicians, and admins
+//endpoint to list all patients, only accessible by doctors, lab technicians, and admins, sorted by name
 export async function GET() {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
