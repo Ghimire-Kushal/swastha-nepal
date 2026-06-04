@@ -28,6 +28,7 @@ const NAV_ITEMS = [
   { href: '/admin/patients', label: 'High-Risk Patients', icon: AlertTriangle },
   { href: '/admin/vaccinations', label: 'Vaccinations', icon: Syringe },
   { href: '/admin/hospitals', label: 'Hospitals', icon: Building2 },
+  { href: '/admin/verifications', label: 'ID Verifications', icon: ShieldCheck },
   { href: '/admin/audit', label: 'Audit Logs', icon: ScrollText },
 ]
 

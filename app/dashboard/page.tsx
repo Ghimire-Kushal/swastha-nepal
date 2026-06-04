@@ -53,13 +53,45 @@ export default async function DashboardPage() {
       </div>
 
       {/* Identity verification banner */}
-      {!patient.citizenshipNumber ? (
+      {patient.verificationStatus === 'verified' ? (
+        <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-3">
+          <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+          <p className="text-sm font-semibold text-emerald-800">Identity verified</p>
+          {patient.citizenshipNumber && (
+            <span className="text-xs text-emerald-600 font-mono bg-emerald-100 px-2 py-0.5 rounded">
+              {patient.citizenshipNumber}
+            </span>
+          )}
+        </div>
+      ) : patient.verificationStatus === 'pending' ? (
+        <div className="flex items-center gap-4 bg-blue-50 border border-blue-200 rounded-xl px-5 py-4">
+          <Clock className="w-5 h-5 text-blue-600 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-blue-900">Verification pending review</p>
+            <p className="text-xs text-blue-700 mt-0.5">Your document has been submitted. An admin will review it shortly.</p>
+          </div>
+        </div>
+      ) : patient.verificationStatus === 'rejected' ? (
+        <div className="flex items-center gap-4 bg-red-50 border border-red-200 rounded-xl px-5 py-4">
+          <ShieldAlert className="w-5 h-5 text-red-600 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-red-900">Verification rejected — please resubmit</p>
+            <p className="text-xs text-red-700 mt-0.5">Your document could not be verified. Upload a clearer photo.</p>
+          </div>
+          <Link
+            href="/dashboard/verify"
+            className="shrink-0 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-colors"
+          >
+            Resubmit
+          </Link>
+        </div>
+      ) : (
         <div className="flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
           <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-amber-900">Identity not verified</p>
             <p className="text-xs text-amber-700 mt-0.5">
-              Verify with your citizenship number or birth certificate to unlock full access.
+              Upload your citizenship card or birth certificate to verify your identity.
             </p>
           </div>
           <Link
@@ -68,14 +100,6 @@ export default async function DashboardPage() {
           >
             Verify Now
           </Link>
-        </div>
-      ) : (
-        <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-3">
-          <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
-          <p className="text-sm font-semibold text-emerald-800">Identity verified</p>
-          <span className="text-xs text-emerald-600 font-mono bg-emerald-100 px-2 py-0.5 rounded">
-            {patient.citizenshipNumber}
-          </span>
         </div>
       )}
 

@@ -32,6 +32,7 @@ export async function getPatientProfile(userId: string) {
     guardianName: result.guardianName ?? '',
     guardianPhone: result.guardianPhone ?? '',
     profilePhotoUrl: result.profilePhotoUrl ?? null,
+    verificationStatus: result.verificationStatus ?? 'unverified',
   }
 }
 
