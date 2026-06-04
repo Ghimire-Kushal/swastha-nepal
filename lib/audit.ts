@@ -16,6 +16,7 @@ export type AuditAction =
   | 'ai.analysis'
   | 'admin.view'
   | 'privacy.update'
+  | 'patient.identity_verified'
 
 export interface AuditEntry {
   id: string

@@ -8,22 +8,25 @@ function createPrismaClient(): PrismaClient {
     ? (['error', 'warn'] as ['error', 'warn'])
     : (['error'] as ['error'])
 
-  // Neon serverless driver for production (Vercel edge/serverless)
-  // Falls back to standard pg adapter for local development
-  if (process.env.NODE_ENV === 'production' || url.includes('neon.tech') || url.includes('supabase.com')) {
+  // Production: use Neon HTTP driver (required for Vercel edge/serverless)
+  // Development: always use standard pg adapter even with a Neon URL
+  if (process.env.NODE_ENV === 'production') {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { neon } = require('@neondatabase/serverless')
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { PrismaNeon } = require('@prisma/adapter-neon')
-    const sql = neon(url)
+    // channel_binding is a libpq-only parameter not supported by the Neon HTTP driver
+    const neonUrl = url.replace(/[&?]channel_binding=[^&]*/g, '').replace(/\?&/, '?')
+    const sql = neon(neonUrl)
     const adapter = new PrismaNeon(sql)
     return new PrismaClient({ adapter, log })
   }
 
-  // Local development — standard pg adapter
+  // Local development — use the pooler URL (DATABASE_URL) so Neon's pgBouncer
+  // multiplexes connections; pool size capped to match Neon free-tier limits.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { PrismaPg } = require('@prisma/adapter-pg')
-  const adapter = new PrismaPg({ connectionString: url })
+  const adapter = new PrismaPg({ connectionString: url, max: 10 })
   return new PrismaClient({ adapter, log })
 }
 

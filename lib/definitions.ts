@@ -32,5 +32,18 @@ export const RegisterSchema = z
     path: ['confirmPassword'],
   })
 
+export const VerifyIdentitySchema = z
+  .object({
+    documentType: z.enum(['citizenship', 'birth_certificate'], {
+      error: 'Select a document type.',
+    }),
+    documentNumber: z
+      .string()
+      .min(3, { error: 'Document number is required.' })
+      .max(100, { error: 'Document number is too long.' })
+      .trim(),
+  })
+
 export type LoginInput = z.infer<typeof LoginSchema>
 export type RegisterInput = z.infer<typeof RegisterSchema>
+export type VerifyIdentityInput = z.infer<typeof VerifyIdentitySchema>

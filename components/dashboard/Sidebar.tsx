@@ -15,6 +15,7 @@ import {
   QrCode,
   Brain,
   Shield,
+  ShieldCheck,
   LogOut,
   MessageSquare,
   Menu,
@@ -34,6 +35,7 @@ const NAV_ITEMS = [
   { href: '/dashboard/qr-card', label: 'QR Health Card', icon: QrCode },
   { href: '/dashboard/ai-analysis', label: 'AI Analysis', icon: Brain },
   { href: '/dashboard/chat', label: 'AI Chat', icon: MessageSquare },
+  { href: '/dashboard/verify', label: 'Verify Identity', icon: ShieldCheck },
   { href: '/dashboard/privacy', label: 'Privacy', icon: Shield },
 ]
 

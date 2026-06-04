@@ -8,7 +8,7 @@ import {
   getEmergencyInfo,
 } from '@/services/patient'
 import { BLOOD_TYPE_DISPLAY } from '@/lib/mock-data'
-import { Calendar, FileText, Heart, AlertTriangle, CheckCircle, AlertCircle, Clock } from 'lucide-react'
+import { Calendar, FileText, Heart, AlertTriangle, CheckCircle, AlertCircle, Clock, ShieldAlert, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 
 function calcAge(dob: Date) {
@@ -51,6 +51,33 @@ export default async function DashboardPage() {
         </h1>
         <p className="text-slate-500 text-sm mt-0.5">Here is your health overview</p>
       </div>
+
+      {/* Identity verification banner */}
+      {!patient.citizenshipNumber ? (
+        <div className="flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-4">
+          <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-amber-900">Identity not verified</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Verify with your citizenship number or birth certificate to unlock full access.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/verify"
+            className="shrink-0 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors"
+          >
+            Verify Now
+          </Link>
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-3">
+          <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+          <p className="text-sm font-semibold text-emerald-800">Identity verified</p>
+          <span className="text-xs text-emerald-600 font-mono bg-emerald-100 px-2 py-0.5 rounded">
+            {patient.citizenshipNumber}
+          </span>
+        </div>
+      )}
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

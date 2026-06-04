@@ -16,7 +16,9 @@
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
     "db:deploy": "prisma migrate deploy",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:seed-demo": "tsx db/seed-demo.ts",
+    "test:load": "tsx __tests__/load/doctor-login-load.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
