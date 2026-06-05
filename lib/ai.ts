@@ -2,16 +2,22 @@ import Anthropic from '@anthropic-ai/sdk'
 
 const g = globalThis as { __anthropic?: Anthropic }
 
-function createClient() {
+function getClient(): Anthropic {
+  if (g.__anthropic) return g.__anthropic
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey || apiKey.startsWith('sk-ant-YOUR')) {
     throw new Error('ANTHROPIC_API_KEY is not configured. Set it in .env.local.')
   }
-  return new Anthropic({ apiKey })
+  const client = new Anthropic({ apiKey })
+  g.__anthropic = client
+  return client
 }
 
-export const anthropic: Anthropic = g.__anthropic ?? createClient()
-if (process.env.NODE_ENV !== 'production') g.__anthropic = anthropic
+export const anthropic = new Proxy({} as Anthropic, {
+  get(_target, prop) {
+    return (getClient() as unknown as Record<string | symbol, unknown>)[prop]
+  },
+})
 
 export const AI_MODEL = 'claude-sonnet-4-6'
 

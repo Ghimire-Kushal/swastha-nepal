@@ -14,10 +14,15 @@
 
 import { NextRequest } from 'next/server'
 import { signToken, verifyToken } from '@/lib/auth'
-import { GET as patientListGET } from '@/app/api/patients/list/route'
-import { GET as citizensGET } from '@/app/api/demo/citizens/route'
 
 const SECRET = 'test-secret-security-tests-at-least-32-chars!!'
+
+// getSession() reads from next/headers — we mock it to control session per test
+const mockGetSession = jest.fn()
+jest.mock('@/lib/auth', () => {
+  const actual = jest.requireActual('@/lib/auth') as typeof import('@/lib/auth')
+  return { ...actual, getSession: () => mockGetSession() }
+})
 
 jest.mock('next/headers', () => ({
   cookies: jest.fn().mockResolvedValue({
@@ -34,10 +39,11 @@ jest.mock('@/lib/prisma', () => ({
   },
 }))
 
-function cookieReq(path: string, cookie?: string) {
-  const headers = new Headers()
-  if (cookie) headers.set('Cookie', `auth-token=${cookie}`)
-  return new NextRequest(`http://localhost:3000${path}`, { headers })
+import { GET as patientListGET } from '@/app/api/patients/list/route'
+import { GET as citizensGET } from '@/app/api/demo/citizens/route'
+
+function cookieReq(path: string, _cookie?: string) {
+  return new NextRequest(`http://localhost:3000${path}`)
 }
 
 // ── JWT unit security ─────────────────────────────────────────────────────────
@@ -92,45 +98,41 @@ describe('JWT security', () => {
 // ── Patient list — auth & role guards ────────────────────────────────────────
 describe('GET /api/patients/list — auth & role enforcement', () => {
   beforeEach(() => { process.env.JWT_SECRET = SECRET })
-  afterEach(() => { delete process.env.JWT_SECRET })
+  afterEach(() => { delete process.env.JWT_SECRET; mockGetSession.mockReset() })
 
-  it('returns 401 with no cookie', async () => {
+  it('returns 401 with no session', async () => {
+    mockGetSession.mockResolvedValue(null)
     const res = await patientListGET(cookieReq('/api/patients/list'))
     expect(res.status).toBe(401)
   })
 
-  it('returns 401 with a garbage token', async () => {
-    const res = await patientListGET(cookieReq('/api/patients/list', 'garbage.token.here'))
-    expect(res.status).toBe(401)
-  })
-
   it('returns 403 when patient tries to access patient list', async () => {
-    const token = await signToken({ sub: 'u1', email: 'p@b.com', name: 'Patient', role: 'patient' })
-    const res = await patientListGET(cookieReq('/api/patients/list', token))
+    mockGetSession.mockResolvedValue({ sub: 'u1', email: 'p@b.com', name: 'Patient', role: 'patient' })
+    const res = await patientListGET(cookieReq('/api/patients/list'))
     expect(res.status).toBe(403)
   })
 
   it('returns 403 when nurse tries to access patient list', async () => {
-    const token = await signToken({ sub: 'u2', email: 'n@b.com', name: 'Nurse', role: 'nurse' })
-    const res = await patientListGET(cookieReq('/api/patients/list', token))
+    mockGetSession.mockResolvedValue({ sub: 'u2', email: 'n@b.com', name: 'Nurse', role: 'nurse' })
+    const res = await patientListGET(cookieReq('/api/patients/list'))
     expect(res.status).toBe(403)
   })
 
   it('allows doctor to access patient list', async () => {
-    const token = await signToken({ sub: 'u3', email: 'd@b.com', name: 'Doctor', role: 'doctor' })
-    const res = await patientListGET(cookieReq('/api/patients/list', token))
+    mockGetSession.mockResolvedValue({ sub: 'u3', email: 'd@b.com', name: 'Doctor', role: 'doctor' })
+    const res = await patientListGET(cookieReq('/api/patients/list'))
     expect(res.status).toBe(200)
   })
 
   it('allows lab_technician to access patient list', async () => {
-    const token = await signToken({ sub: 'u4', email: 'l@b.com', name: 'Lab', role: 'lab_technician' })
-    const res = await patientListGET(cookieReq('/api/patients/list', token))
+    mockGetSession.mockResolvedValue({ sub: 'u4', email: 'l@b.com', name: 'Lab', role: 'lab_technician' })
+    const res = await patientListGET(cookieReq('/api/patients/list'))
     expect(res.status).toBe(200)
   })
 
   it('allows hospital_admin to access patient list', async () => {
-    const token = await signToken({ sub: 'u5', email: 'a@b.com', name: 'Admin', role: 'hospital_admin' })
-    const res = await patientListGET(cookieReq('/api/patients/list', token))
+    mockGetSession.mockResolvedValue({ sub: 'u5', email: 'a@b.com', name: 'Admin', role: 'hospital_admin' })
+    const res = await patientListGET(cookieReq('/api/patients/list'))
     expect(res.status).toBe(200)
   })
 })
@@ -138,28 +140,29 @@ describe('GET /api/patients/list — auth & role enforcement', () => {
 // ── Citizens API — auth guard ─────────────────────────────────────────────────
 describe('GET /api/demo/citizens — auth guard', () => {
   beforeEach(() => { process.env.JWT_SECRET = SECRET })
-  afterEach(() => { delete process.env.JWT_SECRET })
+  afterEach(() => { delete process.env.JWT_SECRET; mockGetSession.mockReset() })
 
-  it('returns 401 with no cookie', async () => {
+  it('returns 401 with no session', async () => {
+    mockGetSession.mockResolvedValue(null)
     const res = await citizensGET(cookieReq('/api/demo/citizens?q=Sharma'))
     expect(res.status).toBe(401)
   })
 
   it('returns 403 when patient (non-staff) calls it', async () => {
-    const token = await signToken({ sub: 'u1', email: 'p@b.com', name: 'Patient', role: 'patient' })
-    const res = await citizensGET(cookieReq('/api/demo/citizens?q=Sharma', token))
+    mockGetSession.mockResolvedValue({ sub: 'u1', email: 'p@b.com', name: 'Patient', role: 'patient' })
+    const res = await citizensGET(cookieReq('/api/demo/citizens?q=Sharma'))
     expect(res.status).toBe(403)
   })
 
   it('returns 400 for query shorter than 2 characters', async () => {
-    const token = await signToken({ sub: 'u1', email: 'd@b.com', name: 'Doctor', role: 'doctor' })
-    const res = await citizensGET(cookieReq('/api/demo/citizens?q=A', token))
+    mockGetSession.mockResolvedValue({ sub: 'u1', email: 'd@b.com', name: 'Doctor', role: 'doctor' })
+    const res = await citizensGET(cookieReq('/api/demo/citizens?q=A'))
     expect(res.status).toBe(400)
   })
 
   it('allows doctor to search citizens', async () => {
-    const token = await signToken({ sub: 'u1', email: 'd@b.com', name: 'Doctor', role: 'doctor' })
-    const res = await citizensGET(cookieReq('/api/demo/citizens?q=Sharma', token))
+    mockGetSession.mockResolvedValue({ sub: 'u1', email: 'd@b.com', name: 'Doctor', role: 'doctor' })
+    const res = await citizensGET(cookieReq('/api/demo/citizens?q=Sharma'))
     expect([200, 404]).toContain(res.status)
   })
 })

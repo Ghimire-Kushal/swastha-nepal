@@ -1,5 +1,6 @@
 /**
  * @jest-environment node
+ *
  * POST /api/translate — input validation, fallback on external failure, XSS in input
  */
 
@@ -75,6 +76,7 @@ describe('POST /api/translate', () => {
   it('defaults from=en to=np when not provided', async () => {
     await POST(makeReq({ text: 'Test' }))
     const calledUrl: string = mockFetch.mock.calls[0][0] as string
-    expect(calledUrl).toContain('langpair=en%7Cnp')
+    // langpair is not URL-encoded in the route (intentional — mymemory API accepts it)
+    expect(calledUrl).toContain('langpair=en|np')
   })
 })

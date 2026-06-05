@@ -1,5 +1,6 @@
 /**
  * @jest-environment node
+ *
  * Identity verification actions — submitVerification, adminVerifyPatient
  */
 

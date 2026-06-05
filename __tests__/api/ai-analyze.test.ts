@@ -1,5 +1,6 @@
 /**
  * @jest-environment node
+ *
  * POST /api/ai/analyze — auth guard, missing API key, input validation
  */
 
@@ -9,27 +10,33 @@ import { signToken } from '@/lib/auth'
 
 const SECRET = 'test-secret-analyze-tests-at-least-32-chars!!'
 
-jest.mock('@/lib/ai', () => ({
-  AI_MODEL: 'claude-sonnet-4-6',
-  MEDICAL_ANALYSIS_SYSTEM_PROMPT: 'You are a medical AI.',
-  anthropic: {
-    messages: {
-      create: jest.fn().mockResolvedValue({
-        content: [{ type: 'text', text: JSON.stringify({
-          riskLevel: 'low',
-          riskScore: 20,
-          summary: 'All values normal.',
-          abnormalFindings: [],
-          risks: [],
-          specialists: [],
-          advice: ['Stay hydrated'],
-          aiConfidence: 'high',
-          disclaimer: 'For informational purposes only.',
-        }) }],
-      }),
+jest.mock('@/lib/ai', () => {
+  const analysisResponse = JSON.stringify({
+    riskLevel: 'low', riskScore: 20, summary: 'All values normal.',
+    abnormalFindings: [], risks: [], specialists: [],
+    advice: ['Stay hydrated'], aiConfidence: 'high',
+    disclaimer: 'For informational purposes only.',
+  })
+  const chunks = [
+    { type: 'content_block_delta', delta: { type: 'text_delta', text: analysisResponse } },
+  ]
+  const stream = {
+    [Symbol.asyncIterator]() {
+      let i = 0
+      return { next: async () => i < chunks.length ? { value: chunks[i++], done: false } : { done: true as const, value: undefined } }
     },
-  },
-}))
+  }
+  return {
+    AI_MODEL: 'claude-sonnet-4-6',
+    MEDICAL_ANALYSIS_SYSTEM_PROMPT: 'You are a medical AI.',
+    anthropic: {
+      messages: {
+        stream: jest.fn().mockReturnValue(stream),
+        create: jest.fn(),
+      },
+    },
+  }
+})
 
 jest.mock('next/headers', () => ({
   cookies: jest.fn().mockResolvedValue({ get: jest.fn().mockReturnValue(undefined), set: jest.fn() }),
