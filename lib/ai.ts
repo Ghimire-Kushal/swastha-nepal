@@ -1,13 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk'
 
-const apiKey = process.env.ANTHROPIC_API_KEY
-if (!apiKey || apiKey.startsWith('sk-ant-YOUR')) {
-  throw new Error('ANTHROPIC_API_KEY is not configured. Set it in .env.local.')
-}
-
 const g = globalThis as { __anthropic?: Anthropic }
 
 function createClient() {
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey || apiKey.startsWith('sk-ant-YOUR')) {
+    throw new Error('ANTHROPIC_API_KEY is not configured. Set it in .env.local.')
+  }
   return new Anthropic({ apiKey })
 }
 

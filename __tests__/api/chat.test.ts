@@ -13,6 +13,13 @@ import { POST } from '@/app/api/ai/chat/route'
 import { NextRequest } from 'next/server'
 import { signToken } from '@/lib/auth'
 
+// Prevent real Anthropic client from initializing (no API key in test env)
+jest.mock('@/lib/ai', () => ({
+  AI_MODEL: 'claude-sonnet-4-6',
+  anthropic: null, // chat route uses mock mode when key is placeholder — never reached in these tests
+  MEDICAL_ANALYSIS_SYSTEM_PROMPT: '',
+}))
+
 // Isolate from real DB and Next.js cookie store
 jest.mock('@/lib/prisma', () => ({
   prisma: {
