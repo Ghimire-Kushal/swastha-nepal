@@ -6,7 +6,7 @@ export async function GET() {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const allowedRoles = ['doctor', 'lab_technician', 'admin']
+  const allowedRoles = ['doctor', 'lab_technician', 'hospital_admin', 'government_admin']
   if (!allowedRoles.includes(session.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
