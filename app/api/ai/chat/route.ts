@@ -154,22 +154,36 @@ export async function POST(request: NextRequest) {
     content: m.content,
   }))
 
-  const stream = await anthropic.messages.stream({
-    model: AI_MODEL,
-    max_tokens: 512,
-    system: systemPrompt,
-    messages: anthropicMessages,
-  })
+  let stream
+  try {
+    stream = await anthropic.messages.stream({
+      model: AI_MODEL,
+      max_tokens: 512,
+      system: systemPrompt,
+      messages: anthropicMessages,
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'AI service unavailable'
+    return new Response(JSON.stringify({ error: message }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
 
   const encoder = new TextEncoder()
   const readable = new ReadableStream({
     async start(controller) {
-      for await (const chunk of stream) {
-        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-          controller.enqueue(encoder.encode(chunk.delta.text))
+      try {
+        for await (const chunk of stream) {
+          if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+            controller.enqueue(encoder.encode(chunk.delta.text))
+          }
         }
+      } catch {
+        // Stream error — close gracefully; client will see truncated response
+      } finally {
+        controller.close()
       }
-      controller.close()
     },
   })
 
