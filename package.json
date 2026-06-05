@@ -19,7 +19,8 @@
     "postinstall": "prisma generate",
     "db:seed-demo": "tsx db/seed-demo.ts",
     "db:seed-citizens": "tsx db/seed-demo-citizens.ts",
-    "test:load": "tsx __tests__/load/doctor-login-load.ts"
+    "test:load": "tsx __tests__/load/doctor-login-load.ts",
+    "test:load:full": "tsx __tests__/load/full-system-load.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

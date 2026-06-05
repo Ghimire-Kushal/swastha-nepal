@@ -26,7 +26,9 @@ function createPrismaClient(): PrismaClient {
   // multiplexes connections; pool size capped to match Neon free-tier limits.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { PrismaPg } = require('@prisma/adapter-pg')
-  const adapter = new PrismaPg({ connectionString: url, max: 10 })
+  // Neon free tier supports up to 25 connections via pgBouncer pooler.
+  // Keep headroom for migrations and seeds running alongside the app.
+  const adapter = new PrismaPg({ connectionString: url, max: 20 })
   return new PrismaClient({ adapter, log })
 }
 
