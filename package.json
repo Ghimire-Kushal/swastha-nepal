@@ -18,6 +18,7 @@
     "db:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
     "db:seed-demo": "tsx db/seed-demo.ts",
+    "db:seed-citizens": "tsx db/seed-demo-citizens.ts",
     "test:load": "tsx __tests__/load/doctor-login-load.ts"
   },
   "prisma": {
