@@ -9,7 +9,7 @@ function createClient() {
 export const anthropic: Anthropic = g.__anthropic ?? createClient()
 if (process.env.NODE_ENV !== 'production') g.__anthropic = anthropic
 
-export const AI_MODEL = 'claude-opus-4-7'
+export const AI_MODEL = 'claude-sonnet-4-6'
 
 export const MEDICAL_ANALYSIS_SYSTEM_PROMPT = `You are Swastha Nepal — a medical AI assistant specializing in Nepal's healthcare context.
 
