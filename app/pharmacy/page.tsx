@@ -9,7 +9,7 @@ export default async function PharmacyOverviewPage() {
   if (!session) redirect('/login')
 
   const pharmacist = await getPharmacistProfile(session.sub)
-  if (!pharmacist) redirect('/login')
+  if (!pharmacist) redirect('/api/auth/clear')
 
   const stats = await getPharmacyStats(session.sub)
 

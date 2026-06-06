@@ -9,7 +9,6 @@ export default async function NursePatientsPage() {
 
   const patients = await prisma.patient.findMany({
     orderBy: { updatedAt: 'desc' },
-    include: { user: { select: { name: true, phone: true } } },
     select: {
       id: true,
       bloodType: true,

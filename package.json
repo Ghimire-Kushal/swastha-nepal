@@ -19,6 +19,7 @@
     "postinstall": "prisma generate",
     "db:seed-demo": "tsx db/seed-demo.ts",
     "db:seed-citizens": "tsx db/seed-demo-citizens.ts",
+    "db:seed-showcase": "tsx --env-file=.env.local db/seed-showcase.ts",
     "test:load": "tsx __tests__/load/doctor-login-load.ts",
     "test:load:full": "tsx __tests__/load/full-system-load.ts"
   },
@@ -63,6 +64,7 @@
     "eslint-config-next": "16.2.6",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
+    "playwright": "^1.60.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
