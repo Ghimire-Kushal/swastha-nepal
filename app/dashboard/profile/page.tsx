@@ -20,7 +20,17 @@ export default async function ProfilePage() {
   const patient = await getPatientProfile(session.sub)
   if (!patient) redirect('/dashboard/verify')
 
-  const emergency = await getEmergencyInfo(session.sub)
+  const emergency = await getEmergencyInfo(session.sub) ?? {
+    bloodType: 'O_POS' as const,
+    organDonor: false,
+    criticalConditions: [] as string[],
+    currentMedications: [] as string[],
+    emergencyContacts: [] as { name: string; relationship: string; phone: string; isPrimary: boolean }[],
+    insuranceProvider: null as string | null,
+    insurancePolicyNum: null as string | null,
+    advanceDirective: null as string | null,
+    qrHash: '',
+  }
 
   const dob = new Date(patient.dateOfBirth)
   const dobFormatted = dob.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })

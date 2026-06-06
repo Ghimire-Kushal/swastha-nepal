@@ -190,15 +190,15 @@ export default async function DashboardPage() {
             <div className="space-y-1.5 text-xs text-red-800">
               <div>
                 <span className="font-medium">Blood Type:</span>{' '}
-                {BLOOD_TYPE_DISPLAY[emergencyInfo.bloodType]}
+                {emergencyInfo ? (BLOOD_TYPE_DISPLAY[emergencyInfo.bloodType] ?? emergencyInfo.bloodType) : '—'}
               </div>
               <div>
                 <span className="font-medium">Allergies:</span>{' '}
-                {emergencyInfo.criticalConditions.length
+                {emergencyInfo?.criticalConditions?.length
                   ? emergencyInfo.criticalConditions.join(', ')
                   : 'None recorded'}
               </div>
-              {emergencyInfo.emergencyContacts[0] && (
+              {emergencyInfo?.emergencyContacts?.[0] && (
                 <div>
                   <span className="font-medium">Emergency:</span>{' '}
                   {emergencyInfo.emergencyContacts[0].name} —{' '}

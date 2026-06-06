@@ -37,7 +37,7 @@ export default async function PatientAIAnalysisPage() {
       gender: patient.gender,
       bloodType: BLOOD_TYPE_DISPLAY[patient.bloodType] ?? patient.bloodType,
     },
-    currentMedications: emergency.currentMedications,
+    currentMedications: emergency?.currentMedications ?? [],
     allergies: allergies.map((a) => ({
       allergen: a.allergenName,
       severity: a.severity,
@@ -60,7 +60,7 @@ export default async function PatientAIAnalysisPage() {
       type: r.type,
       diagnosis: r.diagnosis,
     })),
-    recentDiagnoses: emergency.criticalConditions,
+    recentDiagnoses: emergency?.criticalConditions ?? [],
   }
 
   return (
@@ -81,7 +81,7 @@ export default async function PatientAIAnalysisPage() {
             `${records.length} medical records`,
             `${allergies.length} allergies`,
             `${prescriptions.length} prescriptions`,
-            `${emergency.currentMedications.length} current medications`,
+            `${emergency?.currentMedications?.length ?? 0} current medications`,
             `Blood type: ${BLOOD_TYPE_DISPLAY[patient.bloodType]}`,
           ].map((item) => (
             <span key={item} className="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-full">

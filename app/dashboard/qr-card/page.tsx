@@ -11,10 +11,20 @@ export default async function QRCardPage() {
   const patient = await getPatientProfile(session.sub)
   if (!patient) redirect('/dashboard/profile')
 
-  const [emergency, allergies] = await Promise.all([
+  const [emergencyRaw, allergies] = await Promise.all([
     getEmergencyInfo(session.sub),
     getAllergies(session.sub),
   ])
+
+  const emergency = emergencyRaw ?? {
+    organDonor: false,
+    criticalConditions: [] as string[],
+    currentMedications: [] as string[],
+    emergencyContacts: [] as { name: string; relationship: string; phone: string; isPrimary: boolean }[],
+    insuranceProvider: null as string | null,
+    insurancePolicyNum: null as string | null,
+    qrHash: '',
+  }
 
   const cardData = {
     name: patient.name,
