@@ -3,7 +3,10 @@ import { BLOOD_TYPE_DISPLAY } from '@/lib/mock-data'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 async function getPatientIdByUserId(userId: string): Promise<string | null> {
+  if (!UUID_RE.test(userId)) return null
   const p = await prisma.patient.findUnique({ where: { userId }, select: { id: true } })
   return p?.id ?? null
 }
@@ -11,6 +14,7 @@ async function getPatientIdByUserId(userId: string): Promise<string | null> {
 // ── public service functions ──────────────────────────────────────────────────
 
 export async function getPatientProfile(userId: string) {
+  if (!UUID_RE.test(userId)) return null
   const result = await prisma.patient.findUnique({
     where: { userId },
     include: { user: { select: { name: true, email: true, phone: true } } },
@@ -37,8 +41,9 @@ export async function getPatientProfile(userId: string) {
 }
 
 export async function getEmergencyInfo(userId: string) {
+  if (!UUID_RE.test(userId)) return null
   const patient = await prisma.patient.findUnique({ where: { userId }, select: { id: true } })
-  if (!patient) throw new Error('Patient not found')
+  if (!patient) return null
 
   const info = await prisma.emergencyInfo.findUnique({ where: { patientId: patient.id } })
   if (!info) {

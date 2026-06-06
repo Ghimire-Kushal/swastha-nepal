@@ -18,7 +18,7 @@ export default async function ProfilePage() {
   if (!session) redirect('/login')
 
   const patient = await getPatientProfile(session.sub)
-  if (!patient) redirect('/login')
+  if (!patient) redirect('/dashboard/verify')
 
   const emergency = await getEmergencyInfo(session.sub)
 

@@ -23,8 +23,15 @@ export default async function DashboardPage() {
   const session = await getSession()
   if (!session) redirect('/login')
 
+  // Non-patient roles don't have a patient profile — send them to their dashboard
+  if (session.role === 'doctor') redirect('/doctor')
+  if (session.role === 'nurse') redirect('/nurse')
+  if (session.role === 'lab_technician') redirect('/lab')
+  if (session.role === 'pharmacist') redirect('/pharmacy')
+  if (session.role === 'hospital_admin' || session.role === 'government_admin') redirect('/admin')
+
   const patient = await getPatientProfile(session.sub)
-  if (!patient) redirect('/dashboard/profile')
+  if (!patient) redirect('/dashboard/verify')
 
   const [appointments, prescriptions, aiSummary, emergencyInfo] = await Promise.all([
     getUpcomingAppointments(session.sub),

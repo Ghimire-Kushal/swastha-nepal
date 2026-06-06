@@ -8,7 +8,8 @@ export default async function VerifyIdentityPage() {
   if (!session) redirect('/login')
   if (session.role !== 'patient') redirect('/dashboard')
 
-  const patient = await prisma.patient.findUnique({
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  const patient = UUID_RE.test(session.sub) ? await prisma.patient.findUnique({
     where: { userId: session.sub },
     select: {
       verificationStatus: true,
@@ -18,7 +19,7 @@ export default async function VerifyIdentityPage() {
       verifiedAt: true,
       citizenshipNumber: true,
     },
-  })
+  }) : null
 
   return (
     <div className="max-w-lg mx-auto space-y-6">

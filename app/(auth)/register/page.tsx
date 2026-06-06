@@ -1,12 +1,67 @@
 'use client'
 
 import { useActionState, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Heart, Eye, EyeOff, ArrowRight, Loader2, Check } from 'lucide-react'
+import { Heart, Eye, EyeOff, ArrowRight, Loader2, Check, Zap } from 'lucide-react'
 import { register } from '@/app/actions/auth'
 import { USER_ROLES, ROLE_META, ROLE_LABELS } from '@/types/auth'
 import type { AuthFormState, UserRole } from '@/types/auth'
+
+function DevQuickLogin() {
+  const router = useRouter()
+  const [loading, setLoading] = useState<UserRole | null>(null)
+
+  async function loginAs(role: UserRole) {
+    setLoading(role)
+    try {
+      const res = await fetch('/api/dev/quick-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role }),
+      })
+      const data = await res.json() as { redirect?: string }
+      if (data.redirect) router.push(data.redirect)
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  if (process.env.NODE_ENV === 'production') return null
+
+  return (
+    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+      <div className="flex items-center gap-2 mb-3">
+        <Zap className="w-4 h-4 text-amber-600" />
+        <span className="text-xs font-bold text-amber-700 uppercase tracking-wide">Dev Quick Login</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+        {USER_ROLES.map((role) => {
+          const meta = ROLE_META[role]
+          const isLoading = loading === role
+          return (
+            <button
+              key={role}
+              onClick={() => loginAs(role)}
+              disabled={loading !== null}
+              className="flex flex-col items-center gap-1 px-2 py-2.5 rounded-xl border border-amber-200 bg-white hover:bg-amber-50 hover:border-amber-400 transition-all disabled:opacity-50 text-center"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-amber-600" />
+              ) : (
+                <span className="text-lg">{meta.icon}</span>
+              )}
+              <span className="text-xs font-semibold text-slate-600 leading-tight">
+                {ROLE_LABELS[role]}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 function PasswordStrengthBar({ password }: { password: string }) {
   const checks = [
@@ -79,6 +134,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="px-8 py-8">
+          <DevQuickLogin />
           {/* Global error */}
           {state?.message && (
             <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium">
